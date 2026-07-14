@@ -36,7 +36,7 @@ public class Main {
         }
         scanner.close();
     }
-    
+
     private static void seedTestCustomers() {
         if (findCustomer("C001") != null) {
             return;
