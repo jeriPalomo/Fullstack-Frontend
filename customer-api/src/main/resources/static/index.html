@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    class ApiError extends Error {
+      constructor(status, message) {
+        super(message);
+        this.status = status;
+      }
+    }
+
+    async function apiFetch(path, options) {
+      const res = await fetch(path, options);
+      if (!res.ok) {
+        let msg = `Request failed (HTTP ${res.status}).`;
+        if (res.status === 404) msg = "Customer not found.";
+        if (res.status === 409) msg = "That customer ID is already in use.";
+        try {
+          const body = await res.json();
+          if (body.message) msg = body.message;
+        } catch {
+          // no JSON body to read, fall back to the status-based message
+        }
+        throw new ApiError(res.status, msg);
+      }
+      if (options && options.method === "DELETE") return null;
+      return res.json();
+    }
+
+    function Banner({ banner }) {
+      if (!banner) return null;
+      return <div className={`banner banner-${banner.type}`}>{banner.text}</div>;
+    }
+
+    function CustomerList({ customers, loading, onView, onDelete, onCreate, onFindById }) {
+      const [findId, setFindId] = useState("");
+
+      function handleFind(e) {
+        e.preventDefault();
+        if (findId.trim()) onFindById(findId.trim());
+      }
+
+      return (
+        <div>
+          <div className="toolbar">
+            <form className="find-form" onSubmit={handleFind}>
+              <input
+                type="text"
+                placeholder="Find by customer ID..."
+                value={findId}
+                onChange={(e) => setFindId(e.target.value)}
+              />
+              <button type="submit">Find</button>
+            </form>
+            <button className="primary" onClick={onCreate}>+ New Customer</button>
+          </div>
+
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Branch</th>
+                  <th>Postal Code</th>
+                  <th>Frozen</th>
+                  <th>Accounts</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((c) => (
+                  <tr key={c.customerId}>
+                    <td>{c.customerId}</td>
+                    <td>{c.name}</td>
+                    <td>{c.email}</td>
+                    <td>{c.phoneNumber}</td>
+                    <td>{c.branchLocation}</td>
+                    <td>{c.postalCode}</td>
+                    <td>{c.frozen ? "Yes" : "No"}</td>
+                    <td>{c.accountCount}</td>
+                    <td className="row-actions">
+                      <button onClick={() => onView(c.customerId)}>View</button>
+                      <button className="danger" onClick={() => onDelete(c.customerId)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      );
+    }
+
+    function CustomerDetail({ customer, onBack, onDelete }) {
+      return (
+        <div className="detail">
+          <button onClick={onBack}>&larr; Back to list</button>
+          <h2>{customer.name}</h2>
+          <dl>
+            <dt>Customer ID</dt><dd>{customer.customerId}</dd>
+            <dt>Email</dt><dd>{customer.email}</dd>
+            <dt>Phone</dt><dd>{customer.phoneNumber}</dd>
+            <dt>Branch</dt><dd>{customer.branchLocation}</dd>
+            <dt>Postal Code</dt><dd>{customer.postalCode}</dd>
+            <dt>Frozen</dt><dd>{customer.frozen ? "Yes" : "No"}</dd>
+            <dt>Accounts</dt><dd>{customer.accountCount}</dd>
+          </dl>
+          <button className="danger" onClick={() => onDelete(customer.customerId)}>Delete Customer</button>
+        </div>
+      );
+    }
+
+    function CustomerForm({ onCancel, onCreate }) {
+      const [form, setForm] = useState({
+        customerId: "",
+        password: "",
+        name: "",
+        email: "",
+        phoneNumber: "",
+        branchLocation: "",
+        postalCode: "",
+      });
+
+      function update(field) {
+        return (e) => setForm({ ...form, [field]: e.target.value });
+      }
+
+      function handleSubmit(e) {
+        e.preventDefault();
+        onCreate({ ...form, postalCode: Number(form.postalCode) });
+      }
+
+      return (
+        <form className="customer-form" onSubmit={handleSubmit}>
+          <h2>New Customer</h2>
+          <label>Customer ID
+            <input required value={form.customerId} onChange={update("customerId")} />
+          </label>
+          <label>Password
+            <input required type="password" value={form.password} onChange={update("password")} />
+          </label>
+          <label>Name
+            <input required value={form.name} onChange={update("name")} />
+          </label>
+          <label>Email
+            <input required type="email" value={form.email} onChange={update("email")} />
+          </label>
+          <label>Phone Number
+            <input required value={form.phoneNumber} onChange={update("phoneNumber")} />
+          </label>
+          <label>Branch Location
+            <input required value={form.branchLocation} onChange={update("branchLocation")} />
+          </label>
+          <label>Postal Code
+            <input required type="number" value={form.postalCode} onChange={update("postalCode")} />
+          </label>
+          <div className="form-actions">
+            <button type="button" onClick={onCancel}>Cancel</button>
+            <button className="primary" type="submit">Create</button>
+          </div>
+        </form>
+      );
+    }
+
+    function App() {
+      const [customers, setCustomers] = useState([]);
+      const [selectedCustomer, setSelectedCustomer] = useState(null);
+      const [view, setView] = useState("list");
+      const [loading, setLoading] = useState(true);
+      const [banner, setBanner] = useState(null);
+
+      function showBanner(type, text) {
+        setBanner({ type, text });
+        setTimeout(() => setBanner(null), 4000);
+      }
+
+      async function loadCustomers() {
+        setLoading(true);
+        try {
+          const data = await apiFetch("/api/customers");
+          setCustomers(data);
+        } catch (err) {
+          showBanner("error", err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      useEffect(() => {
+        loadCustomers();
+      }, []);
+
+      async function handleView(customerId) {
+        try {
+          const data = await apiFetch(`/api/customers/${encodeURIComponent(customerId)}`);
+          setSelectedCustomer(data);
+          setView("detail");
+        } catch (err) {
+          showBanner("error", err.message);
+        }
+      }
+
+      async function handleFindById(customerId) {
+        await handleView(customerId);
+      }
+
+      async function handleDelete(customerId) {
+        try {
+          await apiFetch(`/api/customers/${encodeURIComponent(customerId)}`, { method: "DELETE" });
+          setCustomers(customers.filter((c) => c.customerId !== customerId));
+          setView("list");
+          setSelectedCustomer(null);
+          showBanner("success", `Customer ${customerId} deleted.`);
+        } catch (err) {
+          showBanner("error", err.message);
+        }
+      }
+
+      async function handleCreate(form) {
+        try {
+          const created = await apiFetch("/api/customers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(form),
+          });
+          setCustomers([...customers, created]);
+          setView("list");
+          showBanner("success", `Customer ${created.customerId} created.`);
+        } catch (err) {
+          showBanner("error", err.message);
+        }
+      }
+
+      return (
+        <div className="app">
+          <h1>Customer Management</h1>
+          <Banner banner={banner} />
+          {view === "list" && (
+            <CustomerList
+              customers={customers}
+              loading={loading}
+              onView={handleView}
+              onDelete={handleDelete}
+              onCreate={() => setView("create")}
+              onFindById={handleFindById}
+            />
+          )}
+          {view === "detail" && selectedCustomer && (
+            <CustomerDetail
+              customer={selectedCustomer}
+              onBack={() => { setView("list"); setSelectedCustomer(null); }}
+              onDelete={handleDelete}
+            />
+          )}
+          {view === "create" && (
+            <CustomerForm onCancel={() => setView("list")} onCreate={handleCreate} />
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
