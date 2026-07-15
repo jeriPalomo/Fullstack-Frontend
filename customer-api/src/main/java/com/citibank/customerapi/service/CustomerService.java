@@ -44,4 +44,27 @@ public class CustomerService {
         }
         customerRepository.deleteById(customerId);
     }
+
+    public Customer setFrozen(String customerId, boolean frozen) {
+        Customer customer = getCustomer(customerId);
+        if (frozen) {
+            customer.freezeAccount();
+        } else {
+            customer.unfreezeAccount();
+        }
+        return customerRepository.save(customer);
+    }
+
+    public Customer authenticate(String customerId, String password) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid customer ID or password"));
+
+        if (!customer.getPassword().equals(password)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid customer ID or password");
+        }
+        if (customer.isFrozen()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is frozen");
+        }
+        return customer;
+    }
 }

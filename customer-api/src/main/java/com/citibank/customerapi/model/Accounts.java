@@ -1,17 +1,25 @@
 package com.citibank.customerapi.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Accounts class storing account details and transaction history
+ * Accounts class storing account details and transaction history.
+ * primaryOwner/jointOwners store customerId references rather than embedding
+ * Customer documents, so an account is owned independently of any one customer record.
 */
+@Document(collection = "accounts")
 public class Accounts {
     private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
 
     private String accountType;
+    @Id
     private String accountNumber;
     private String primaryOwner;
     private List<String> jointOwners;
@@ -21,6 +29,7 @@ public class Accounts {
     private double APY;
     private List<String> transactionHistory;
 
+    @PersistenceCreator
     public Accounts(String accountType, String accountNumber, String primaryOwner, List<String> jointOwners, String routingNumber, double balance, boolean directDeposit, double APY) {
         this.accountType = accountType;
         this.accountNumber = accountNumber;
@@ -46,8 +55,8 @@ public class Accounts {
     public String getAccountNumber() { return accountNumber; }
     public String getRoutingNumber() { return routingNumber; }
     public String getPrimaryOwner() { return primaryOwner; }
-    public List<String> getJointOwnersList() { return jointOwners; }
-    public List<String> getTransactionHistoryList() { return transactionHistory; }
+    public List<String> getJointOwners() { return jointOwners; }
+    public List<String> getTransactionHistory() { return transactionHistory; }
 
     public void addJointOwner(String name) {
         if (!this.jointOwners.contains(name)) {

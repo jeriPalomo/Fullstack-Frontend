@@ -15,7 +15,7 @@ public class CustomerResponse {
     private final String branchLocation;
     private final int postalCode;
     private final boolean frozen;
-    private final int accountCount;
+    private final boolean admin;
 
     public CustomerResponse(Customer customer) {
         this.customerId = customer.getCustomerId();
@@ -25,7 +25,7 @@ public class CustomerResponse {
         this.branchLocation = customer.getBranchLocation();
         this.postalCode = customer.getPostalCode();
         this.frozen = customer.isFrozen();
-        this.accountCount = customer.getAccounts().size();
+        this.admin = customer.isAdmin();
     }
 
     // Jackson (Spring's default JSON library) turns these getters into JSON fields automatically
@@ -36,5 +36,5 @@ public class CustomerResponse {
     public String getBranchLocation() { return branchLocation; }
     public int getPostalCode() { return postalCode; }
     public boolean isFrozen() { return frozen; }
-    public int getAccountCount() { return accountCount; }
+    public boolean isAdmin() { return admin; }
 }

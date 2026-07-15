@@ -4,11 +4,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /*
- * Customer class representing a bank customer
+ * Customer class representing a bank customer.
+ * Accounts are stored in their own collection (see Accounts) and reference this
+ * customer's id as primaryOwner/jointOwner, rather than being embedded here.
 */
 @Document(collection = "customers")
 public class Customer {
@@ -21,11 +20,10 @@ public class Customer {
     private String branchLocation;
     private int postalCode;
     private boolean isFrozen;
-
-    private List<Accounts> accounts = new ArrayList<>();
+    private boolean admin;
 
     @PersistenceCreator
-    public Customer(String customerId, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode) {
+    public Customer(String customerId, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode, boolean admin) {
         this.customerId = customerId;
         this.password = password;
         this.name = name;
@@ -34,6 +32,11 @@ public class Customer {
         this.branchLocation = branchLocation;
         this.postalCode = postalCode;
         this.isFrozen = false;
+        this.admin = admin;
+    }
+
+    public Customer(String customerId, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode) {
+        this(customerId, password, name, email, phoneNumber, branchLocation, postalCode, false);
     }
 
     // Getters + Setters
@@ -58,28 +61,11 @@ public class Customer {
     public void setPostalCode(int postalCode) { this.postalCode = postalCode; }
 
     public boolean isFrozen() { return isFrozen; }
-    public List<Accounts> getAccounts() { return accounts; }
+
+    public boolean isAdmin() { return admin; }
+    public void setAdmin(boolean admin) { this.admin = admin; }
 
     // Methods
     public void freezeAccount() { isFrozen = true; }
     public void unfreezeAccount() { isFrozen = false; }
-
-    public void addAccount(Accounts account) {
-        if (!accounts.contains(account)) {
-            accounts.add(account);
-        }
-    }
-
-    public void removeAccount(Accounts account) {
-        accounts.remove(account);
-    }
-
-    public Accounts getAccount(String accountNumber) {
-        for (Accounts a : accounts) {
-            if (a.getAccountNumber().equals(accountNumber)) {
-                return a;
-            }
-        }
-        return null;
-    }
 }
