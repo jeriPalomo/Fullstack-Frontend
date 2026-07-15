@@ -47,6 +47,6 @@ public class AuthController {
                 request.getBranchLocation(),
                 request.getPostalCode(),
                 false);
-        return new CustomerResponse(customerService.createCustomer(customer));
+        return new CustomerResponse(customerService.registerCustomer(customer));
     }
 }

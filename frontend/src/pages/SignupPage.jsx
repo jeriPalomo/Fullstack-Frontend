@@ -12,6 +12,11 @@ const emptyForm = {
   postalCode: '',
 };
 
+// Mirrors the backend's EMAIL_PATTERN (CustomerService.java): name@domain.tld,
+// not restricted to specific TLDs. Checked client-side purely so the user gets
+// instant feedback instead of waiting on a round trip for an obvious typo.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function SignupPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +31,16 @@ export function SignupPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+
+    if (!EMAIL_PATTERN.test(form.email)) {
+      setError('Enter a valid email address (e.g. name@example.com).');
+      return;
+    }
+    if (!(Number(form.postalCode) > 0)) {
+      setError('Enter a valid postal code.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await register({ ...form, customerId: form.customerId.trim(), postalCode: Number(form.postalCode) });
@@ -56,7 +71,14 @@ export function SignupPage() {
         </label>
         <label>
           Email
-          <input type="email" value={form.email} onChange={update('email')} required />
+          <input
+            type="email"
+            value={form.email}
+            onChange={update('email')}
+            pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+            title="Enter a valid email address, e.g. name@example.com"
+            required
+          />
         </label>
         <label>
           Phone

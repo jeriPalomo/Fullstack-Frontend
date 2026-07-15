@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /*
  * Holds the business rules for customers (existence checks, not-found/conflict
@@ -15,6 +16,9 @@ import java.util.List;
  */
 @Service
 public class CustomerService {
+
+    // name@domain.tld shape - deliberately not restricted to specific TLDs like .com/.net.
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     private final CustomerRepository customerRepository;
 
@@ -36,6 +40,37 @@ public class CustomerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Customer " + customer.getCustomerId() + " already exists");
         }
         return customerRepository.save(customer);
+    }
+
+    // Public self-service sign-up: same conflict check as createCustomer, plus
+    // field-format and duplicate-email/phone checks that only apply when a
+    // customer is registering themselves (not when an admin creates one).
+    public Customer registerCustomer(Customer customer) {
+        if (customer.getCustomerId() == null || customer.getCustomerId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer ID is required");
+        }
+        if (customer.getPassword() == null || customer.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
+        }
+        if (customer.getName() == null || customer.getName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required");
+        }
+        if (customer.getEmail() == null || !EMAIL_PATTERN.matcher(customer.getEmail()).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid email address is required");
+        }
+        if (customer.getPhoneNumber() == null || customer.getPhoneNumber().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number is required");
+        }
+        if (customer.getPostalCode() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid postal code is required");
+        }
+        if (customerRepository.existsByEmail(customer.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with email " + customer.getEmail() + " already exists");
+        }
+        if (customerRepository.existsByPhoneNumber(customer.getPhoneNumber())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with phone number " + customer.getPhoneNumber() + " already exists");
+        }
+        return createCustomer(customer);
     }
 
     public void deleteCustomer(String customerId) {
