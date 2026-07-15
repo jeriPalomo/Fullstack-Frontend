@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
@@ -44,6 +44,9 @@ export function LoginPage() {
         </button>
         <p className="hint">
           Demo customer: C001 / pass123 &nbsp;·&nbsp; Demo admin: A001 / admin123
+        </p>
+        <p className="hint">
+          Don't have an account? <Link to="/signup">Create one</Link>
         </p>
       </form>
     </div>

@@ -35,6 +35,7 @@ async function request(path, options = {}) {
 export const api = {
   login: (customerId, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ customerId, password }) }),
+  register: (customer) => request('/auth/register', { method: 'POST', body: JSON.stringify(customer) }),
 
   getCustomers: () => request('/customers'),
   getCustomer: (customerId) => request(`/customers/${encodeURIComponent(customerId)}`),

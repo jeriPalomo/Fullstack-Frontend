@@ -21,13 +21,20 @@ export function AuthProvider({ children }) {
     return loggedIn;
   }
 
+  // Registers a new customer, then logs them straight in with the password
+  // they just chose (the register response never carries the password back).
+  async function register(newCustomer) {
+    await api.register(newCustomer);
+    return login(newCustomer.customerId, newCustomer.password);
+  }
+
   function logout() {
     setCustomer(null);
     localStorage.removeItem(STORAGE_KEY);
   }
 
   return (
-    <AuthContext.Provider value={{ customer, login, logout }}>
+    <AuthContext.Provider value={{ customer, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
