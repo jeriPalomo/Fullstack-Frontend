@@ -4,9 +4,8 @@ import { api } from '../../api/client';
 
 const emptyForm = {
   accountType: 'Checking',
-  accountNumber: '',
+  nickname: '',
   primaryOwner: '',
-  routingNumber: '',
   balance: '',
   directDeposit: false,
   apy: '',
@@ -51,12 +50,13 @@ export function AccountsTab({ showBanner }) {
   async function handleCreate(e) {
     e.preventDefault();
     try {
-      await api.createAccount({
+      const created = await api.createAccount({
         ...form,
+        nickname: form.nickname.trim() || undefined,
         balance: Number(form.balance),
         apy: Number(form.apy),
       });
-      showBanner('success', `Account ${form.accountNumber} opened.`);
+      showBanner('success', `Account ${created.accountNumber} opened.`);
       setForm(emptyForm);
       setShowForm(false);
       load();
@@ -69,6 +69,21 @@ export function AccountsTab({ showBanner }) {
     try {
       await api.deleteAccount(accountNumber);
       showBanner('success', `Account ${accountNumber} closed.`);
+      load();
+    } catch (err) {
+      showBanner('error', err.message);
+    }
+  }
+
+  async function handleToggleFrozen(account) {
+    try {
+      if (account.status === 'FROZEN') {
+        await api.unfreezeAccount(account.accountNumber);
+        showBanner('success', `Account ${account.accountNumber} unfrozen.`);
+      } else {
+        await api.freezeAccount(account.accountNumber);
+        showBanner('success', `Account ${account.accountNumber} frozen.`);
+      }
       load();
     } catch (err) {
       showBanner('error', err.message);
@@ -119,10 +134,10 @@ export function AccountsTab({ showBanner }) {
           <select value={form.accountType} onChange={update('accountType')}>
             <option>Checking</option>
             <option>Savings</option>
+            <option>Certificate</option>
           </select>
-          <input required placeholder="Account Number" value={form.accountNumber} onChange={update('accountNumber')} />
+          <input placeholder="Nickname (optional)" value={form.nickname} onChange={update('nickname')} />
           <input required placeholder="Primary Owner (Customer ID)" value={form.primaryOwner} onChange={update('primaryOwner')} />
-          <input required placeholder="Routing Number" value={form.routingNumber} onChange={update('routingNumber')} />
           <input required type="number" step="0.01" placeholder="Initial Balance" value={form.balance} onChange={update('balance')} />
           <input required type="number" step="0.01" placeholder="APY %" value={form.apy} onChange={update('apy')} />
           <label className="checkbox-label">
@@ -147,7 +162,14 @@ export function AccountsTab({ showBanner }) {
               adminActions={
                 <div className="account-actions">
                   <span className="muted">Owner: {account.primaryOwner}</span>
-                  <button className="danger" onClick={() => handleDelete(account.accountNumber)}>Close Account</button>
+                  {account.status !== 'CLOSED' && (
+                    <button onClick={() => handleToggleFrozen(account)}>
+                      {account.status === 'FROZEN' ? 'Unfreeze' : 'Freeze'}
+                    </button>
+                  )}
+                  <button className="danger" disabled={account.status === 'CLOSED'} onClick={() => handleDelete(account.accountNumber)}>
+                    Close Account
+                  </button>
                 </div>
               }
             />

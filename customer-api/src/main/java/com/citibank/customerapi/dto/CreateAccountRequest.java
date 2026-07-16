@@ -1,13 +1,13 @@
 package com.citibank.customerapi.dto;
 
 /*
- * Request body for an admin opening a new account for a customer.
+ * Request body for opening a new account. accountNumber/routingNumber are
+ * intentionally absent - the server always generates them (see AccountService).
  */
 public class CreateAccountRequest {
     private String accountType;
-    private String accountNumber;
+    private String nickname;
     private String primaryOwner;
-    private String routingNumber;
     private double balance;
     private boolean directDeposit;
     private double apy;
@@ -15,14 +15,11 @@ public class CreateAccountRequest {
     public String getAccountType() { return accountType; }
     public void setAccountType(String accountType) { this.accountType = accountType; }
 
-    public String getAccountNumber() { return accountNumber; }
-    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
 
     public String getPrimaryOwner() { return primaryOwner; }
     public void setPrimaryOwner(String primaryOwner) { this.primaryOwner = primaryOwner; }
-
-    public String getRoutingNumber() { return routingNumber; }
-    public void setRoutingNumber(String routingNumber) { this.routingNumber = routingNumber; }
 
     public double getBalance() { return balance; }
     public void setBalance(double balance) { this.balance = balance; }

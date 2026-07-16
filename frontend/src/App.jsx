@@ -4,6 +4,10 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { CustomerDashboard } from './pages/CustomerDashboard';
+import { AccountDetailPage } from './pages/AccountDetailPage';
+import { DepositPage } from './pages/DepositPage';
+import { WithdrawPage } from './pages/WithdrawPage';
+import { TransferPage } from './pages/TransferPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 // Top-level route table. AuthProvider wraps everything so login state is
@@ -21,6 +25,38 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CustomerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountNumber"
+            element={
+              <ProtectedRoute>
+                <AccountDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountNumber/deposit"
+            element={
+              <ProtectedRoute>
+                <DepositPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountNumber/withdraw"
+            element={
+              <ProtectedRoute>
+                <WithdrawPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountNumber/transfer"
+            element={
+              <ProtectedRoute>
+                <TransferPage />
               </ProtectedRoute>
             }
           />

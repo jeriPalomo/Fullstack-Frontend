@@ -4,8 +4,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,18 +14,23 @@ import java.util.List;
 */
 @Document(collection = "accounts")
 public class Accounts {
-    private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss");
+
+    public enum AccountStatus { ACTIVE, FROZEN, CLOSED }
 
     private String accountType;
     @Id
     private String accountNumber;
+    private String nickname;
     private String primaryOwner;
     private List<String> jointOwners;
     private String routingNumber;
     private double balance;
     private boolean directDeposit;
     private double APY;
-    private List<String> transactionHistory;
+    private List<Transaction> transactionHistory;
+    // Not a constructor param so existing documents without this field
+    // deserialize to ACTIVE via this initializer, same as new accounts.
+    private AccountStatus status = AccountStatus.ACTIVE;
 
     @PersistenceCreator
     public Accounts(String accountType, String accountNumber, String primaryOwner, List<String> jointOwners, String routingNumber, double balance, boolean directDeposit, double APY) {
@@ -44,7 +47,6 @@ public class Accounts {
         this.APY = APY;
 
         this.transactionHistory = new ArrayList<>();
-        logTransaction("Account created. Initial balance: $" + balance);
     }
 
     // Getters
@@ -53,10 +55,20 @@ public class Accounts {
     public boolean isDirectDeposit() { return directDeposit; }
     public String getAccountType() { return accountType; }
     public String getAccountNumber() { return accountNumber; }
+    public String getNickname() { return nickname; }
     public String getRoutingNumber() { return routingNumber; }
     public String getPrimaryOwner() { return primaryOwner; }
     public List<String> getJointOwners() { return jointOwners; }
-    public List<String> getTransactionHistory() { return transactionHistory; }
+    public List<Transaction> getTransactionHistory() { return transactionHistory; }
+    public AccountStatus getStatus() { return status; }
+    public boolean isFrozen() { return status == AccountStatus.FROZEN; }
+    public boolean isClosed() { return status == AccountStatus.CLOSED; }
+
+    public void setNickname(String nickname) { this.nickname = nickname; }
+
+    public void freeze() { status = AccountStatus.FROZEN; }
+    public void unfreeze() { status = AccountStatus.ACTIVE; }
+    public void close() { status = AccountStatus.CLOSED; }
 
     public void addJointOwner(String name) {
         if (!this.jointOwners.contains(name)) {
@@ -68,45 +80,41 @@ public class Accounts {
     public void deposit(double amount) {
         if (amount > 0) {
             balance += amount;
-            logTransaction("Deposited: $" + amount + ". New balance: $" + balance);
+            logTransaction(Transaction.Type.DEPOSIT, amount, "Deposit");
         }
     }
 
     public void withdraw(double amount) {
         if (amount > 0 && amount <= balance) {
             balance -= amount;
-            logTransaction("Withdrew: $" + amount + ". New balance: $" + balance);
+            logTransaction(Transaction.Type.WITHDRAW, amount, "Withdrawal");
         }
     }
 
     public boolean transferTo(Accounts destinationAccount, double amount) {
         if (destinationAccount == null) {
-            logTransaction("Transfer failed: Invalid destination account.");
             return false;
         }
 
         if (amount > 0 && this.balance >= amount) {
             this.balance -= amount;
-            logTransaction("Transferred Out: $" + amount + " to " + destinationAccount.getAccountNumber() + " | New Balance: $" + this.balance);
+            logTransaction(Transaction.Type.TRANSFER_OUT, amount, "Transfer to " + destinationAccount.getAccountNumber());
 
             destinationAccount.receiveTransfer(this.accountNumber, amount);
             return true;
         }
 
-        logTransaction("Failed transfer attempt of: $" + amount + " to " + destinationAccount.getAccountNumber());
         return false;
     }
 
     private void receiveTransfer(String fromAccountNumber, double amount) {
         if (amount > 0) {
             this.balance += amount;
-            logTransaction("Received Transfer: $" + amount + " from " + fromAccountNumber + " | New Balance: $" + this.balance);
+            logTransaction(Transaction.Type.TRANSFER_IN, amount, "Transfer from " + fromAccountNumber);
         }
     }
 
-    // Adds MM/dd/yyyy HH:mm:ss timestamp to transaction logs
-    private void logTransaction(String message) {
-        String timestamp = LocalDateTime.now().format(TIMESTAMP_FORMAT);
-        transactionHistory.add("[" + timestamp + "] " + message);
+    private void logTransaction(Transaction.Type type, double amount, String description) {
+        transactionHistory.add(new Transaction(type, amount, this.balance, description));
     }
 }

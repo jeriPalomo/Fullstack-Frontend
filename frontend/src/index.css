@@ -1,11 +1,37 @@
+:root {
+  --citi-blue-900: #002d5e;
+  --citi-blue-700: #0561a5;
+  --citi-blue-600: #0a6cb8;
+  --citi-blue-50: #eaf3fb;
+  --citi-red: #e2231a;
+  --citi-red-dark: #b91c1c;
+  --citi-red-50: #fdecec;
+  --citi-white: #ffffff;
+  --citi-gray-50: #f4f6f8;
+  --citi-gray-100: #eceff2;
+  --citi-gray-200: #dde2e7;
+  --citi-gray-500: #6b7280;
+  --citi-text: #16202a;
+  --citi-success: #166534;
+  --citi-success-bg: #dcfce7;
+  --citi-success-border: #86efac;
+  --citi-error: #991b1b;
+  --citi-error-bg: #fee2e2;
+  --citi-error-border: #fca5a5;
+  --citi-info: #0561a5;
+  --citi-info-bg: #eaf3fb;
+  --citi-info-border: #a9cdea;
+  --shadow-sm: 0 1px 3px rgba(0, 45, 94, 0.1);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #f5f6f8;
-  color: #1a1a1a;
+  background: var(--citi-gray-50);
+  color: var(--citi-text);
   margin: 0;
 }
 
@@ -20,15 +46,16 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--citi-blue-900);
+  border-bottom: 3px solid var(--citi-red);
 }
 
 .brand {
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #1a1a1a;
+  font-size: 1.15rem;
+  color: var(--citi-white);
   text-decoration: none;
+  letter-spacing: 0.01em;
 }
 
 .nav-links {
@@ -38,13 +65,26 @@ body {
 }
 
 .nav-links a {
-  color: #2563eb;
+  color: var(--citi-white);
   text-decoration: none;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.nav-links a:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 
 .nav-user {
-  color: #555;
+  color: var(--citi-white);
   font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.nav-links .link-button {
+  color: var(--citi-white);
+  opacity: 0.9;
 }
 
 .content {
@@ -70,49 +110,65 @@ h1 {
 
 input, select {
   padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--citi-gray-200);
+  border-radius: 6px;
   font-size: 0.95rem;
   font-family: inherit;
 }
 
 button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--citi-gray-200);
+  border-radius: 6px;
+  background: var(--citi-white);
   cursor: pointer;
   font-size: 0.95rem;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 button:hover {
-  background: #eee;
+  background: var(--citi-gray-100);
 }
 
 button.primary {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
+  background: var(--citi-blue-700);
+  color: var(--citi-white);
+  border-color: var(--citi-blue-700);
 }
 
 button.primary:hover {
-  background: #1d4ed8;
+  background: var(--citi-blue-900);
+}
+
+button.accent {
+  background: var(--citi-red);
+  color: var(--citi-white);
+  border-color: var(--citi-red);
+}
+
+button.accent:hover {
+  background: var(--citi-red-dark);
 }
 
 button.danger {
-  background: #fff;
-  color: #dc2626;
-  border-color: #dc2626;
+  background: var(--citi-white);
+  color: var(--citi-red-dark);
+  border-color: var(--citi-red-dark);
 }
 
 button.danger:hover {
-  background: #fee2e2;
+  background: var(--citi-red-50);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .link-button {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--citi-blue-700);
   padding: 0;
   font-size: 0.9rem;
 }
@@ -125,19 +181,19 @@ button.danger:hover {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--citi-white);
+  box-shadow: var(--shadow-sm);
 }
 
 th, td {
   text-align: left;
   padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--citi-gray-100);
   font-size: 0.9rem;
 }
 
 th {
-  background: #fafafa;
+  background: var(--citi-gray-50);
   font-weight: 600;
 }
 
@@ -148,21 +204,27 @@ th {
 
 .banner {
   padding: 0.75rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   margin: 0 2rem;
   font-size: 0.95rem;
 }
 
 .banner-error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
+  background: var(--citi-error-bg);
+  color: var(--citi-error);
+  border: 1px solid var(--citi-error-border);
 }
 
 .banner-success {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #86efac;
+  background: var(--citi-success-bg);
+  color: var(--citi-success);
+  border: 1px solid var(--citi-success-border);
+}
+
+.banner-info {
+  background: var(--citi-info-bg);
+  color: var(--citi-info);
+  border: 1px solid var(--citi-info-border);
 }
 
 /* Login */
@@ -175,10 +237,11 @@ th {
 }
 
 .login-form {
-  background: #fff;
+  background: var(--citi-white);
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  border-top: 4px solid var(--citi-red);
   width: 340px;
 }
 
@@ -215,10 +278,10 @@ th {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  background: #fff;
+  background: var(--citi-white);
   padding: 1rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
   margin-bottom: 1rem;
 }
 
@@ -235,7 +298,7 @@ th {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--citi-gray-200);
 }
 
 .tabs button {
@@ -247,12 +310,12 @@ th {
 }
 
 .tabs button.active {
-  border-bottom-color: #2563eb;
-  color: #2563eb;
+  border-bottom-color: var(--citi-red);
+  color: var(--citi-blue-700);
   font-weight: 600;
 }
 
-/* Accounts */
+/* Accounts (admin AccountCard) */
 
 .account-grid {
   display: grid;
@@ -261,10 +324,10 @@ th {
 }
 
 .account-card {
-  background: #fff;
+  background: var(--citi-white);
   padding: 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
 }
 
 .account-card-header {
@@ -280,7 +343,7 @@ th {
 }
 
 .muted {
-  color: #777;
+  color: var(--citi-gray-500);
   font-size: 0.8rem;
   margin: 0;
 }
@@ -288,7 +351,7 @@ th {
 .balance {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #166534;
+  color: var(--citi-blue-900);
 }
 
 .account-actions {
@@ -306,8 +369,8 @@ th {
   list-style: none;
   margin: 0.5rem 0 0;
   padding: 0.5rem;
-  background: #fafafa;
-  border-radius: 4px;
+  background: var(--citi-gray-50);
+  border-radius: 6px;
   max-height: 200px;
   overflow-y: auto;
   font-size: 0.8rem;
@@ -316,9 +379,300 @@ th {
 
 .transaction-history li {
   padding: 0.2rem 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--citi-gray-100);
 }
 
 .transaction-history li:last-child {
   border-bottom: none;
+}
+
+/* Home page: accounts grouped by type */
+
+.home-section {
+  margin-bottom: 2rem;
+}
+
+.home-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.home-section-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--citi-blue-900);
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.account-tile {
+  display: block;
+  background: var(--citi-white);
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: var(--citi-text);
+  border-left: 4px solid var(--citi-blue-700);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.account-tile:hover {
+  box-shadow: 0 2px 8px rgba(0, 45, 94, 0.18);
+  transform: translateY(-1px);
+}
+
+.account-tile .tile-name {
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+}
+
+.account-tile .tile-balance {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--citi-blue-900);
+  margin-top: 0.5rem;
+}
+
+.empty-state {
+  color: var(--citi-gray-500);
+  font-size: 0.9rem;
+}
+
+/* Account detail page */
+
+.account-detail-header {
+  background: var(--citi-white);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border-top: 4px solid var(--citi-red);
+}
+
+.account-detail-header .account-mask {
+  color: var(--citi-gray-500);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.account-detail-header .balance-big {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--citi-blue-900);
+  margin: 1rem 0 0;
+}
+
+.account-detail-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.details-dropdown {
+  background: var(--citi-white);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.details-dropdown summary {
+  cursor: pointer;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: var(--citi-blue-700);
+  list-style: none;
+}
+
+.details-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.details-grid dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--citi-gray-500);
+  margin: 0;
+}
+
+.details-grid dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+}
+
+.editable-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.editable-name h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.editable-name input {
+  font-size: 1.5rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Transaction history + filters */
+
+.transaction-section {
+  background: var(--citi-white);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.25rem;
+}
+
+.transaction-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--citi-gray-100);
+}
+
+.transaction-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.transaction-filters label {
+  font-size: 0.75rem;
+  color: var(--citi-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.transaction-filters input {
+  width: 110px;
+}
+
+.transaction-table th, .transaction-table td {
+  font-size: 0.85rem;
+}
+
+.transaction-type {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.transaction-type-deposit, .transaction-type-transfer_in {
+  background: var(--citi-success-bg);
+  color: var(--citi-success);
+}
+
+.transaction-type-withdraw, .transaction-type-transfer_out {
+  background: var(--citi-red-50);
+  color: var(--citi-red-dark);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-active {
+  background: var(--citi-success-bg);
+  color: var(--citi-success);
+}
+
+.status-badge-frozen {
+  background: var(--citi-gray-100);
+  color: var(--citi-gray-500);
+}
+
+.status-badge-closed {
+  background: var(--citi-red-50);
+  color: var(--citi-red-dark);
+}
+
+/* Simple form pages: Deposit / Withdraw / Transfer */
+
+.simple-form-page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simple-form-card {
+  background: var(--citi-white);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  border-top: 4px solid var(--citi-blue-700);
+  width: 380px;
+}
+
+.simple-form-card h1 {
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.simple-form-card label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.simple-form-card input, .simple-form-card select {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  font-weight: normal;
+}
+
+.simple-form-card .form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.simple-form-card .form-actions button {
+  flex: 1;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--citi-blue-700);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
 }

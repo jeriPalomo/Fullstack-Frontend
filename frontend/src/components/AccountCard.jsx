@@ -9,6 +9,8 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
   const [amount, setAmount] = useState('');
   const [transferTo, setTransferTo] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const status = account.status || 'ACTIVE';
+  const canTransact = status === 'ACTIVE';
 
   // Reads the amount input and returns it as a positive number, or null if invalid.
   function parsedAmount() {
@@ -20,10 +22,13 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
     <div className="account-card">
       <div className="account-card-header">
         <div>
-          <h3>{account.accountType} · {account.accountNumber}</h3>
+          <h3>{account.nickname ? `${account.nickname} · ` : ''}{account.accountType} · {account.accountNumber}</h3>
           <p className="muted">Routing {account.routingNumber} · APY {account.apy}%</p>
         </div>
-        <div className="balance">{currency(account.balance)}</div>
+        <div>
+          <div className="balance">{currency(account.balance)}</div>
+          <span className={`status-badge status-badge-${status.toLowerCase()}`}>{status}</span>
+        </div>
       </div>
 
       <div className="account-actions">
@@ -33,12 +38,13 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
           step="0.01"
           placeholder="Amount"
           value={amount}
+          disabled={!canTransact}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <button onClick={() => { const v = parsedAmount(); if (v) { onDeposit(account.accountNumber, v); setAmount(''); } }}>
+        <button disabled={!canTransact} onClick={() => { const v = parsedAmount(); if (v) { onDeposit(account.accountNumber, v); setAmount(''); } }}>
           Deposit
         </button>
-        <button onClick={() => { const v = parsedAmount(); if (v) { onWithdraw(account.accountNumber, v); setAmount(''); } }}>
+        <button disabled={!canTransact} onClick={() => { const v = parsedAmount(); if (v) { onWithdraw(account.accountNumber, v); setAmount(''); } }}>
           Withdraw
         </button>
       </div>
@@ -48,9 +54,11 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
           type="text"
           placeholder="Transfer to account #"
           value={transferTo}
+          disabled={!canTransact}
           onChange={(e) => setTransferTo(e.target.value)}
         />
         <button
+          disabled={!canTransact}
           onClick={() => {
             const v = parsedAmount();
             if (v && transferTo.trim()) {
@@ -71,8 +79,10 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
       </button>
       {showHistory && (
         <ul className="transaction-history">
-          {account.transactionHistory.slice().reverse().map((entry, i) => (
-            <li key={i}>{entry}</li>
+          {account.transactionHistory.slice().reverse().map((t) => (
+            <li key={t.id}>
+              [{new Date(t.timestamp).toLocaleString()}] {t.description}: {currency(t.amount)}. New balance: {currency(t.balanceAfter)}
+            </li>
           ))}
         </ul>
       )}

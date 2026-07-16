@@ -3,6 +3,7 @@ package com.citibank.customerapi.controller;
 import com.citibank.customerapi.dto.AccountResponse;
 import com.citibank.customerapi.dto.AmountRequest;
 import com.citibank.customerapi.dto.CreateAccountRequest;
+import com.citibank.customerapi.dto.RenameAccountRequest;
 import com.citibank.customerapi.dto.TransferRequest;
 import com.citibank.customerapi.service.AccountService;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -46,10 +48,28 @@ public class AccountController {
         return new AccountResponse(accountService.createAccount(request));
     }
 
-    // DELETE /api/accounts/{accountNumber} -> closes an account, or 404
+    // PUT /api/accounts/{accountNumber}/nickname -> renames an account, or 404
+    @PutMapping("/{accountNumber}/nickname")
+    public AccountResponse renameAccount(@PathVariable String accountNumber, @RequestBody RenameAccountRequest request) {
+        return new AccountResponse(accountService.renameAccount(accountNumber, request.getNickname()));
+    }
+
+    // DELETE /api/accounts/{accountNumber} -> soft-closes an account (balance must be zero), or 404
     @DeleteMapping("/{accountNumber}")
     public void deleteAccount(@PathVariable String accountNumber) {
         accountService.deleteAccount(accountNumber);
+    }
+
+    // PUT /api/accounts/{accountNumber}/freeze -> freezes the account (blocks deposit/withdraw/transfer/joint-owner changes)
+    @PutMapping("/{accountNumber}/freeze")
+    public AccountResponse freezeAccount(@PathVariable String accountNumber) {
+        return new AccountResponse(accountService.setFrozen(accountNumber, true));
+    }
+
+    // PUT /api/accounts/{accountNumber}/unfreeze -> unfreezes the account
+    @PutMapping("/{accountNumber}/unfreeze")
+    public AccountResponse unfreezeAccount(@PathVariable String accountNumber) {
+        return new AccountResponse(accountService.setFrozen(accountNumber, false));
     }
 
     // POST /api/accounts/{accountNumber}/deposit

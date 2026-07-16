@@ -48,7 +48,11 @@ export const api = {
   getAllAccounts: () => request('/accounts'),
   getAccount: (accountNumber) => request(`/accounts/${encodeURIComponent(accountNumber)}`),
   createAccount: (account) => request('/accounts', { method: 'POST', body: JSON.stringify(account) }),
+  renameAccount: (accountNumber, nickname) =>
+    request(`/accounts/${encodeURIComponent(accountNumber)}/nickname`, { method: 'PUT', body: JSON.stringify({ nickname }) }),
   deleteAccount: (accountNumber) => request(`/accounts/${encodeURIComponent(accountNumber)}`, { method: 'DELETE' }),
+  freezeAccount: (accountNumber) => request(`/accounts/${encodeURIComponent(accountNumber)}/freeze`, { method: 'PUT' }),
+  unfreezeAccount: (accountNumber) => request(`/accounts/${encodeURIComponent(accountNumber)}/unfreeze`, { method: 'PUT' }),
   deposit: (accountNumber, amount) =>
     request(`/accounts/${encodeURIComponent(accountNumber)}/deposit`, { method: 'POST', body: JSON.stringify({ amount }) }),
   withdraw: (accountNumber, amount) =>
