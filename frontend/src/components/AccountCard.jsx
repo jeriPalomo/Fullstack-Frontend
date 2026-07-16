@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const currency = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const isCredit = (type) => type === 'DEPOSIT' || type === 'TRANSFER_IN';
 
 // Reusable card showing one account's balance plus deposit/withdraw/transfer controls.
 // Used on both the customer dashboard and the admin accounts tab; `adminActions`
@@ -80,8 +81,17 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
       {showHistory && (
         <ul className="transaction-history">
           {account.transactionHistory.slice().reverse().map((t) => (
-            <li key={t.id}>
-              [{new Date(t.timestamp).toLocaleString()}] {t.description}: {currency(t.amount)}. New balance: {currency(t.balanceAfter)}
+            <li key={t.id} className="transaction-history-item">
+              <div>
+                <div className="transaction-history-desc">{t.description}</div>
+                <div className="transaction-history-date">{new Date(t.timestamp).toLocaleString()}</div>
+              </div>
+              <div className="transaction-history-right">
+                <span className={isCredit(t.type) ? 'transaction-amount-credit' : 'transaction-amount-debit'}>
+                  {isCredit(t.type) ? '+' : '-'}{currency(t.amount)}
+                </span>
+                <div className="transaction-history-balance">Balance: {currency(t.balanceAfter)}</div>
+              </div>
             </li>
           ))}
         </ul>

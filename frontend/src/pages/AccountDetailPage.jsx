@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { EditableAccountName } from '../components/EditableAccountName';
+import { Modal } from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { useBanner } from '../hooks/useBanner';
 import { api } from '../api/client';
@@ -16,6 +17,8 @@ const TYPE_LABELS = {
 };
 
 const emptyFilters = { type: 'ALL', minAmount: '', maxAmount: '', fromDate: '', toDate: '' };
+
+const isCredit = (type) => type === 'DEPOSIT' || type === 'TRANSFER_IN';
 
 // Account detail page: editable nickname + masked number, big centered balance,
 // a collapsible dropdown of account facts, deposit/withdraw/transfer buttons that
@@ -32,6 +35,7 @@ export function AccountDetailPage() {
   const [banner, showBanner] = useBanner();
   const [filters, setFilters] = useState(emptyFilters);
   const [freezing, setFreezing] = useState(false);
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -66,12 +70,17 @@ export function AccountDetailPage() {
   // owner can trigger them - joint owners can view and transact, not close.
   const isPrimaryOwner = account && account.primaryOwner === customer.customerId;
 
-  async function handleToggleFrozen() {
+  function openFreezeModal() {
+    setShowFreezeModal(true);
+  }
+
+  async function confirmToggleFrozen() {
     setFreezing(true);
     try {
       const updated = account.status === 'FROZEN' ? await api.unfreezeAccount(accountNumber) : await api.freezeAccount(accountNumber);
       setAccount(updated);
       showBanner('success', updated.status === 'FROZEN' ? 'Account frozen.' : 'Account unfrozen.');
+      setShowFreezeModal(false);
     } catch (err) {
       showBanner('error', err.message);
     } finally {
@@ -148,7 +157,7 @@ export function AccountDetailPage() {
 
             {isPrimaryOwner && account.status !== 'CLOSED' && (
               <div className="account-detail-actions">
-                <button disabled={freezing} onClick={handleToggleFrozen}>
+                <button disabled={freezing} onClick={openFreezeModal}>
                   {account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account'}
                 </button>
                 {!confirmingDelete ? (
@@ -165,6 +174,35 @@ export function AccountDetailPage() {
               </div>
             )}
           </div>
+
+          <Modal
+            open={showFreezeModal}
+            onClose={() => setShowFreezeModal(false)}
+            title={account.status === 'FROZEN' ? 'Unfreeze this account?' : 'Freeze this account?'}
+            actions={
+              <>
+                <button className="primary" disabled={freezing} onClick={confirmToggleFrozen}>
+                  {account.status === 'FROZEN' ? 'Confirm Unfreeze' : 'Confirm Freeze'}
+                </button>
+                <button disabled={freezing} onClick={() => setShowFreezeModal(false)}>Cancel</button>
+              </>
+            }
+          >
+            <dl className="details-grid">
+              <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
+              <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
+              <div><dt>Routing Number</dt><dd>{account.routingNumber}</dd></div>
+              <div><dt>Primary Owner</dt><dd>{account.primaryOwner}</dd></div>
+              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwners.length ? account.jointOwners.join(', ') : 'None'}</dd></div>
+              <div><dt>Balance</dt><dd>{currency(account.balance)}</dd></div>
+              <div><dt>Current Status</dt><dd><span className={`status-badge status-badge-${account.status.toLowerCase()}`}>{account.status}</span></dd></div>
+            </dl>
+            <p className="muted">
+              {account.status === 'FROZEN'
+                ? 'Unfreezing this account will restore the ability to deposit, withdraw, and transfer funds.'
+                : 'Freezing this account will immediately block all deposits, withdrawals, and transfers until it is unfrozen.'}
+            </p>
+          </Modal>
 
           <details className="details-dropdown">
             <summary>Account details</summary>
@@ -223,7 +261,9 @@ export function AccountDetailPage() {
                       <td>{new Date(t.timestamp).toLocaleString()}</td>
                       <td><span className={`transaction-type transaction-type-${t.type.toLowerCase()}`}>{TYPE_LABELS[t.type]}</span></td>
                       <td>{t.description}</td>
-                      <td>{currency(t.amount)}</td>
+                      <td className={isCredit(t.type) ? 'transaction-amount-credit' : 'transaction-amount-debit'}>
+                        {isCredit(t.type) ? '+' : '-'}{currency(t.amount)}
+                      </td>
                       <td>{currency(t.balanceAfter)}</td>
                     </tr>
                   ))}

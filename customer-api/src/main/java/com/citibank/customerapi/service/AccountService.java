@@ -2,6 +2,7 @@ package com.citibank.customerapi.service;
 
 import com.citibank.customerapi.dto.CreateAccountRequest;
 import com.citibank.customerapi.model.Accounts;
+import com.citibank.customerapi.model.Customer;
 import com.citibank.customerapi.repository.AccountRepository;
 import com.citibank.customerapi.repository.CustomerRepository;
 import org.springframework.http.HttpStatus;
@@ -164,10 +165,12 @@ public class AccountService {
     }
 
     // Deposit/withdraw/transfer/joint-owner changes are blocked on both closed
-    // and frozen accounts; renaming only checks requireNotClosed directly.
+    // and frozen accounts, and on accounts owned by a frozen customer; renaming
+    // only checks requireNotClosed directly.
     private void requireTransactable(Accounts account) {
         requireNotClosed(account);
         requireNotFrozen(account);
+        requireOwnersNotFrozen(account);
     }
 
     private void requireNotClosed(Accounts account) {
@@ -179,6 +182,24 @@ public class AccountService {
     private void requireNotFrozen(Accounts account) {
         if (account.isFrozen()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account " + account.getAccountNumber() + " is frozen");
+        }
+    }
+
+    // A frozen customer's login is blocked going forward (see CustomerService.authenticate),
+    // but an already-issued JWT is never revoked - so transactions are also blocked here,
+    // per-request, for any account where the primary owner or a joint owner is frozen.
+    private void requireOwnersNotFrozen(Accounts account) {
+        requireCustomerNotFrozen(account.getPrimaryOwner());
+        for (String jointOwner : account.getJointOwners()) {
+            requireCustomerNotFrozen(jointOwner);
+        }
+    }
+
+    private void requireCustomerNotFrozen(String customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer " + customerId + " not found"));
+        if (customer.isFrozen()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Customer " + customerId + " is frozen");
         }
     }
 }
