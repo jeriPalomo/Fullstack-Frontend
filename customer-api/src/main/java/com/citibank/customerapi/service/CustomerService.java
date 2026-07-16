@@ -3,6 +3,7 @@ package com.citibank.customerapi.service;
 import com.citibank.customerapi.model.Customer;
 import com.citibank.customerapi.repository.CustomerRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,9 +23,11 @@ public class CustomerService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     private final CustomerRepository customerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CustomerService(CustomerRepository customerRepository) {
+    public CustomerService(CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
         this.customerRepository = customerRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Customer> getAllCustomers() {
@@ -37,9 +40,12 @@ public class CustomerService {
     }
 
     // Customer IDs are never chosen by the caller - always generated here so
-    // nobody can pick their own (or someone else's) ID.
+    // nobody can pick their own (or someone else's) ID. Password is hashed here
+    // too, so both entry points (self-registration and admin-create) get it -
+    // registerCustomer() delegates to this method after its own validation.
     public Customer createCustomer(Customer customer) {
         customer.setCustomerId(generateCustomerId());
+        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
         return customerRepository.save(customer);
     }
 
@@ -102,7 +108,7 @@ public class CustomerService {
         Customer customer = customerRepository.findByUserName(userName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
 
-        if (!customer.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, customer.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
         if (customer.isFrozen()) {

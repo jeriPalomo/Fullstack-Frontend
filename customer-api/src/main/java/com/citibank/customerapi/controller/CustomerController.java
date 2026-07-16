@@ -5,6 +5,7 @@ import com.citibank.customerapi.dto.CustomerResponse;
 import com.citibank.customerapi.model.Customer;
 import com.citibank.customerapi.service.AccountService;
 import com.citibank.customerapi.service.CustomerService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +41,7 @@ public class CustomerController {
     }
 
     // GET /api/customers -> list of every customer
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<CustomerResponse> getAllCustomers() {
         return customerService.getAllCustomers().stream()
@@ -48,12 +50,14 @@ public class CustomerController {
     }
 
     // GET /api/customers/{id} -> a single customer, or 404 if not found
+    @PreAuthorize("hasRole('ADMIN') or #customerId == authentication.name")
     @GetMapping("/{customerId}")
     public CustomerResponse getCustomer(@PathVariable String customerId) {
         return new CustomerResponse(customerService.getCustomer(customerId));
     }
 
     // GET /api/customers/{id}/accounts -> every account this customer owns (primary or joint)
+    @PreAuthorize("hasRole('ADMIN') or #customerId == authentication.name")
     @GetMapping("/{customerId}/accounts")
     public List<AccountResponse> getCustomerAccounts(@PathVariable String customerId) {
         customerService.getCustomer(customerId);
@@ -61,6 +65,7 @@ public class CustomerController {
     }
 
     // POST /api/customers -> creates a new customer, 409 if the id is already taken
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerResponse createCustomer(@RequestBody Customer customer) {
@@ -68,18 +73,21 @@ public class CustomerController {
     }
 
     // DELETE /api/customers/{id} -> removes a customer, or 404 if it doesn't exist
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{customerId}")
     public void deleteCustomer(@PathVariable String customerId) {
         customerService.deleteCustomer(customerId);
     }
 
     // PUT /api/customers/{id}/freeze -> freezes the customer's login
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{customerId}/freeze")
     public CustomerResponse freezeCustomer(@PathVariable String customerId) {
         return new CustomerResponse(customerService.setFrozen(customerId, true));
     }
 
     // PUT /api/customers/{id}/unfreeze -> unfreezes the customer's login
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{customerId}/unfreeze")
     public CustomerResponse unfreezeCustomer(@PathVariable String customerId) {
         return new CustomerResponse(customerService.setFrozen(customerId, false));

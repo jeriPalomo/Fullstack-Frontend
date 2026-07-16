@@ -1,9 +1,11 @@
-import { createContext, useContext, useState } from 'react';
-import { api } from '../api/client';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { api, clearToken, setToken, setUnauthorizedHandler } from '../api/client';
 
 const AuthContext = createContext(null);
 
 // Persist the logged-in customer in localStorage so a page refresh doesn't log them out.
+// The JWT itself lives under its own key, managed by api/client.js.
 const STORAGE_KEY = 'customer-portal.customer';
 
 // Wraps the app and exposes { customer, login, logout } to any descendant via useAuth().
@@ -13,9 +15,27 @@ export function AuthProvider({ children }) {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   });
+  const navigate = useNavigate();
+
+  const logout = useCallback(() => {
+    setCustomer(null);
+    localStorage.removeItem(STORAGE_KEY);
+    clearToken();
+  }, []);
+
+  // client.js is a plain module with no router access of its own, so it calls
+  // back into here on any 401 (expired/invalid/missing token) to log out and
+  // send the user back to the login page.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logout();
+      navigate('/login', { replace: true });
+    });
+  }, [logout, navigate]);
 
   async function login(userName, password) {
-    const loggedIn = await api.login(userName, password);
+    const { token, customer: loggedIn } = await api.login(userName, password);
+    setToken(token);
     setCustomer(loggedIn);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedIn));
     return loggedIn;
@@ -26,11 +46,6 @@ export function AuthProvider({ children }) {
   async function register(newCustomer) {
     await api.register(newCustomer);
     return login(newCustomer.userName, newCustomer.password);
-  }
-
-  function logout() {
-    setCustomer(null);
-    localStorage.removeItem(STORAGE_KEY);
   }
 
   return (

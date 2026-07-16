@@ -6,13 +6,30 @@ export class ApiError extends Error {
   }
 }
 
+// The JWT issued at login is stored here (alongside the customer profile,
+// which AuthContext manages under its own key) and attached to every request.
+const TOKEN_KEY = 'customer-portal.token';
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+// AuthProvider registers a callback here on mount (it has router access; this
+// plain module doesn't) so a 401 from any request - expired/invalid/missing
+// token - can trigger an automatic logout + redirect to /login.
+let unauthorizedHandler = null;
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
+
 // Shared fetch wrapper used by every api.* method below.
-// Prefixes the backend base path, sends/expects JSON, and normalizes errors + empty bodies.
+// Prefixes the backend base path, sends/expects JSON, attaches the bearer
+// token when present, and normalizes errors + empty bodies.
 async function request(path, options = {}) {
-  const res = await fetch(`/api${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-  });
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`/api${path}`, { ...options, headers });
 
   if (!res.ok) {
     let message = `Request failed (HTTP ${res.status}).`;
@@ -22,6 +39,7 @@ async function request(path, options = {}) {
     } catch {
       // no JSON body to read, fall back to the status-based message
     }
+    if (res.status === 401 && unauthorizedHandler) unauthorizedHandler();
     throw new ApiError(res.status, message);
   }
 
