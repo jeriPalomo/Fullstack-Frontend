@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /*
@@ -35,19 +36,23 @@ public class CustomerService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer " + customerId + " not found"));
     }
 
+    // Customer IDs are never chosen by the caller - always generated here so
+    // nobody can pick their own (or someone else's) ID.
     public Customer createCustomer(Customer customer) {
-        if (customerRepository.existsById(customer.getCustomerId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Customer " + customer.getCustomerId() + " already exists");
-        }
+        customer.setCustomerId(generateCustomerId());
         return customerRepository.save(customer);
     }
 
-    // Public self-service sign-up: same conflict check as createCustomer, plus
-    // field-format and duplicate-email/phone checks that only apply when a
-    // customer is registering themselves (not when an admin creates one).
+    private String generateCustomerId() {
+        return "C" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+    }
+
+    // Public self-service sign-up: same ID generation as createCustomer, plus
+    // field-format and duplicate-username/email/phone checks that only apply
+    // when a customer is registering themselves (not when an admin creates one).
     public Customer registerCustomer(Customer customer) {
-        if (customer.getCustomerId() == null || customer.getCustomerId().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer ID is required");
+        if (customer.getUserName() == null || customer.getUserName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required");
         }
         if (customer.getPassword() == null || customer.getPassword().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required");
@@ -63,6 +68,9 @@ public class CustomerService {
         }
         if (customer.getPostalCode() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid postal code is required");
+        }
+        if (customerRepository.existsByUserName(customer.getUserName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username " + customer.getUserName() + " is already taken");
         }
         if (customerRepository.existsByEmail(customer.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with email " + customer.getEmail() + " already exists");
@@ -90,12 +98,12 @@ public class CustomerService {
         return customerRepository.save(customer);
     }
 
-    public Customer authenticate(String customerId, String password) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid customer ID or password"));
+    public Customer authenticate(String userName, String password) {
+        Customer customer = customerRepository.findByUserName(userName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password"));
 
         if (!customer.getPassword().equals(password)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid customer ID or password");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
         if (customer.isFrozen()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is frozen");

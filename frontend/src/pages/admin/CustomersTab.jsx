@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 
 const emptyForm = {
-  customerId: '',
+  userName: '',
   password: '',
   name: '',
   email: '',
@@ -48,7 +48,7 @@ export function CustomersTab({ showBanner }) {
     e.preventDefault();
     try {
       await api.createCustomer({ ...form, postalCode: Number(form.postalCode) });
-      showBanner('success', `Customer ${form.customerId} created.`);
+      showBanner('success', `Customer ${form.userName} created.`);
       setForm(emptyForm);
       setShowForm(false);
       load();
@@ -93,7 +93,7 @@ export function CustomersTab({ showBanner }) {
 
       {showForm && (
         <form className="inline-form" onSubmit={handleCreate}>
-          <input required placeholder="Customer ID" value={form.customerId} onChange={update('customerId')} />
+          <input required placeholder="Username" value={form.userName} onChange={update('userName')} />
           <input required type="password" placeholder="Password" value={form.password} onChange={update('password')} />
           <input required placeholder="Name" value={form.name} onChange={update('name')} />
           <input required type="email" placeholder="Email" value={form.email} onChange={update('email')} />
@@ -111,6 +111,7 @@ export function CustomersTab({ showBanner }) {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Username</th>
               <th>Name</th>
               <th>Email</th>
               <th>Branch</th>
@@ -123,6 +124,7 @@ export function CustomersTab({ showBanner }) {
             {customers.map((c) => (
               <tr key={c.customerId}>
                 <td>{c.customerId}</td>
+                <td>{c.userName}</td>
                 <td>{c.name}</td>
                 <td>{c.email}</td>
                 <td>{c.branchLocation}</td>

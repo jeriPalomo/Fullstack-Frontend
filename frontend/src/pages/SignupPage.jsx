@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const emptyForm = {
-  customerId: '',
+  userName: '',
   password: '',
   name: '',
   email: '',
@@ -43,7 +43,7 @@ export function SignupPage() {
 
     setSubmitting(true);
     try {
-      await register({ ...form, customerId: form.customerId.trim(), postalCode: Number(form.postalCode) });
+      await register({ ...form, userName: form.userName.trim(), postalCode: Number(form.postalCode) });
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -58,8 +58,8 @@ export function SignupPage() {
         <h1>Create account</h1>
         {error && <div className="banner banner-error">{error}</div>}
         <label>
-          Customer ID
-          <input value={form.customerId} onChange={update('customerId')} required autoFocus />
+          Username
+          <input value={form.userName} onChange={update('userName')} required autoFocus />
         </label>
         <label>
           Password

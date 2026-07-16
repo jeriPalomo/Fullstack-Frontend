@@ -4,9 +4,10 @@ package com.citibank.customerapi.dto;
  * Request body for public self-service sign-up. Deliberately narrower than the
  * Customer model - no `admin` field, so a caller can't grant themselves admin
  * by including it in the JSON body the way the admin-only POST /customers does.
+ * There's also no `customerId` field - that's always generated server-side.
  */
 public class RegisterRequest {
-    private String customerId;
+    private String userName;
     private String password;
     private String name;
     private String email;
@@ -14,8 +15,8 @@ public class RegisterRequest {
     private String branchLocation;
     private int postalCode;
 
-    public String getCustomerId() { return customerId; }
-    public void setCustomerId(String customerId) { this.customerId = customerId; }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }

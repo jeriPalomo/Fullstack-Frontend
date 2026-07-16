@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [customerId, setCustomerId] = useState('');
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -17,7 +17,7 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const loggedIn = await login(customerId.trim(), password);
+      const loggedIn = await login(userName.trim(), password);
       navigate(loggedIn.admin ? '/admin' : '/');
     } catch (err) {
       setError(err.message);
@@ -32,8 +32,8 @@ export function LoginPage() {
         <h1>Sign in</h1>
         {error && <div className="banner banner-error">{error}</div>}
         <label>
-          Customer ID
-          <input value={customerId} onChange={(e) => setCustomerId(e.target.value)} required autoFocus />
+          Username
+          <input value={userName} onChange={(e) => setUserName(e.target.value)} required autoFocus />
         </label>
         <label>
           Password
@@ -43,7 +43,7 @@ export function LoginPage() {
           {submitting ? 'Signing in...' : 'Sign in'}
         </button>
         <p className="hint">
-          Demo customer: C001 / pass123 &nbsp;·&nbsp; Demo admin: A001 / admin123
+          Demo customer: sonia.jain / pass123 &nbsp;·&nbsp; Demo admin: priya.admin / admin123
         </p>
         <p className="hint">
           Don't have an account? <Link to="/signup">Create one</Link>

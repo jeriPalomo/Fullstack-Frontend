@@ -9,6 +9,7 @@ import com.citibank.customerapi.model.Customer;
  */
 public class CustomerResponse {
     private final String customerId;
+    private final String userName;
     private final String name;
     private final String email;
     private final String phoneNumber;
@@ -19,6 +20,7 @@ public class CustomerResponse {
 
     public CustomerResponse(Customer customer) {
         this.customerId = customer.getCustomerId();
+        this.userName = customer.getUserName();
         this.name = customer.getName();
         this.email = customer.getEmail();
         this.phoneNumber = customer.getPhoneNumber();
@@ -30,6 +32,7 @@ public class CustomerResponse {
 
     // Jackson (Spring's default JSON library) turns these getters into JSON fields automatically
     public String getCustomerId() { return customerId; }
+    public String getUserName() { return userName; }
     public String getName() { return name; }
     public String getEmail() { return email; }
     public String getPhoneNumber() { return phoneNumber; }

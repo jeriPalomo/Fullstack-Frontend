@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Customer {
     @Id
     private String customerId;
+    private String userName;
     private String password;
     private String name;
     private String email;
@@ -23,8 +24,9 @@ public class Customer {
     private boolean admin;
 
     @PersistenceCreator
-    public Customer(String customerId, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode, boolean admin) {
+    public Customer(String customerId, String userName, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode, boolean admin) {
         this.customerId = customerId;
+        this.userName = userName;
         this.password = password;
         this.name = name;
         this.email = email;
@@ -35,12 +37,16 @@ public class Customer {
         this.admin = admin;
     }
 
-    public Customer(String customerId, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode) {
-        this(customerId, password, name, email, phoneNumber, branchLocation, postalCode, false);
+    public Customer(String customerId, String userName, String password, String name, String email, String phoneNumber, String branchLocation, int postalCode) {
+        this(customerId, userName, password, name, email, phoneNumber, branchLocation, postalCode, false);
     }
 
     // Getters + Setters
     public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
+
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }

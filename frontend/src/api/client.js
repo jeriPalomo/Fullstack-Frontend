@@ -33,8 +33,8 @@ async function request(path, options = {}) {
 // One method per backend endpoint. IDs are encodeURIComponent'd since they're
 // interpolated straight into the URL path.
 export const api = {
-  login: (customerId, password) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ customerId, password }) }),
+  login: (userName, password) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ userName, password }) }),
   register: (customer) => request('/auth/register', { method: 'POST', body: JSON.stringify(customer) }),
 
   getCustomers: () => request('/customers'),

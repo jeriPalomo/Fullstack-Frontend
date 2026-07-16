@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /*
- * Stateless login: validates credentials and hands back the customer's profile
- * (including their admin flag) for the frontend to hold onto. No session/token
- * is issued - the frontend keeps the logged-in customerId in memory/localStorage
- * and sends it with subsequent requests.
+ * Stateless login: validates credentials (by userName, not customerId - the
+ * customerId is generated server-side and isn't meant to be memorized) and
+ * hands back the customer's profile (including their admin flag) for the
+ * frontend to hold onto. No session/token is issued - the frontend keeps the
+ * logged-in customer in memory/localStorage and sends its customerId with
+ * subsequent requests.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -30,16 +32,18 @@ public class AuthController {
 
     @PostMapping("/login")
     public CustomerResponse login(@RequestBody LoginRequest request) {
-        return new CustomerResponse(customerService.authenticate(request.getCustomerId(), request.getPassword()));
+        return new CustomerResponse(customerService.authenticate(request.getUserName(), request.getPassword()));
     }
 
-    // POST /api/auth/register -> public self-service sign-up, 409 if the id is already taken.
+    // POST /api/auth/register -> public self-service sign-up, 409 if the username is already taken.
     // Always creates a non-admin customer, regardless of what the caller sends.
+    // customerId is left null here - CustomerService generates it.
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerResponse register(@RequestBody RegisterRequest request) {
         Customer customer = new Customer(
-                request.getCustomerId(),
+                null,
+                request.getUserName(),
                 request.getPassword(),
                 request.getName(),
                 request.getEmail(),

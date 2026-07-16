@@ -14,8 +14,8 @@ export function AuthProvider({ children }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  async function login(customerId, password) {
-    const loggedIn = await api.login(customerId, password);
+  async function login(userName, password) {
+    const loggedIn = await api.login(userName, password);
     setCustomer(loggedIn);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(loggedIn));
     return loggedIn;
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
   // they just chose (the register response never carries the password back).
   async function register(newCustomer) {
     await api.register(newCustomer);
-    return login(newCustomer.customerId, newCustomer.password);
+    return login(newCustomer.userName, newCustomer.password);
   }
 
   function logout() {

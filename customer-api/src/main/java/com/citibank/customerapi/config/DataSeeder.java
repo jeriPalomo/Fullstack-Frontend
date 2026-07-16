@@ -29,10 +29,10 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
-        customerRepository.save(new Customer("C001", "pass123", "Sonia Jain", "sonia@example.com", "555-0101", "New York", 10001, false));
-        customerRepository.save(new Customer("C002", "pass123", "Nevil Johnson", "nevil@example.com", "555-0102", "Chicago", 60601, false));
-        customerRepository.save(new Customer("C003", "pass123", "Carla Gomez", "carla@example.com", "555-0103", "Los Angeles", 90001, false));
-        customerRepository.save(new Customer("A001", "admin123", "Priya Shah", "priya@example.com", "555-0199", "New York", 10001, true));
+        customerRepository.save(new Customer("C001", "sonia.jain", "pass123", "Sonia Jain", "sonia@example.com", "555-0101", "New York", 10001, false));
+        customerRepository.save(new Customer("C002", "nevil.johnson", "pass123", "Nevil Johnson", "nevil@example.com", "555-0102", "Chicago", 60601, false));
+        customerRepository.save(new Customer("C003", "carla.gomez", "pass123", "Carla Gomez", "carla@example.com", "555-0103", "Los Angeles", 90001, false));
+        customerRepository.save(new Customer("A001", "priya.admin", "admin123", "Priya Shah", "priya@example.com", "555-0199", "New York", 10001, true));
 
         accountRepository.save(new Accounts("Checking", "1000000001", "C001", null, "021000021", 2500.00, true, 0.01));
         accountRepository.save(new Accounts("Savings", "1000000002", "C001", null, "021000021", 10000.00, false, 3.75));
