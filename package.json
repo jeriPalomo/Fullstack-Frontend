@@ -1,0 +1,15 @@
+{
+  "name": "fullstack-frontend-dev",
+  "private": true,
+  "scripts": {
+    "mongo": "powershell -NoProfile -ExecutionPolicy Bypass -File customer-api/start-mongo.ps1",
+    "backend": "cd /d customer-api && .\\mvnw.cmd spring-boot:run",
+    "frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently -n mongo,backend,frontend -c blue,green,magenta \"npm:mongo\" \"wait-on tcp:27018 && npm run backend\" \"wait-on tcp:8080 && npm run frontend\"",
+    "stop": "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 27018,8080,5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "wait-on": "^8.0.0"
+  }
+}
