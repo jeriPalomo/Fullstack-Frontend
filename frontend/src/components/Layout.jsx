@@ -18,6 +18,9 @@ export function Layout({ banner, children }) {
         <Link to="/" className="brand">Citibank Customer Portal</Link>
         {customer && (
           <nav className="nav-links">
+            {!customer.admin && <Link to="/">Accounts</Link>}
+            {!customer.admin && <Link to="/transfer">Transfer</Link>}
+            <Link to="/profile">User Profile</Link>
             {customer.admin && <Link to="/admin">Admin</Link>}
             <span className="nav-user">{customer.name}</span>
             <button className="link-button" onClick={handleLogout}>Log out</button>

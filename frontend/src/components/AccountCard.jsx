@@ -3,11 +3,11 @@ import { useState } from 'react';
 const currency = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const isCredit = (type) => type === 'DEPOSIT' || type === 'TRANSFER_IN';
 
-// Read-only account summary used on the admin panel: balance, status, and
-// transaction history, plus an `adminActions` slot for the Settings menu.
-// Admins can view an account's details but never deposit/withdraw/transfer/
-// rename it - those stay owner-only, both here and enforced server-side.
-export function AccountCard({ account, adminActions }) {
+// Read-only account summary used on the admin panel: balance, status,
+// ownership, and transaction history. Admins can view an account but never
+// deposit/withdraw/transfer/rename/freeze/close it - those stay owner-only,
+// both here (no controls rendered) and enforced server-side.
+export function AccountCard({ account, ownerLabel }) {
   const [showHistory, setShowHistory] = useState(false);
   const status = account.status || 'ACTIVE';
   const locked = account.accountType === 'Certificate' && !account.matured;
@@ -31,7 +31,7 @@ export function AccountCard({ account, adminActions }) {
         </div>
       </div>
 
-      {adminActions}
+      {ownerLabel && <p className="muted">{ownerLabel}</p>}
 
       <button className="link-button" onClick={() => setShowHistory((v) => !v)}>
         {showHistory ? 'Hide' : 'Show'} transaction history ({account.transactionHistory.length})

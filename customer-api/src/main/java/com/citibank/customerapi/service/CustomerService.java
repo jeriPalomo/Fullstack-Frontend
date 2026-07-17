@@ -87,15 +87,14 @@ public class CustomerService {
         return createCustomer(customer);
     }
 
-    public void deleteCustomer(String customerId) {
-        if (!customerRepository.existsById(customerId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer " + customerId + " not found");
-        }
-        customerRepository.deleteById(customerId);
-    }
-
+    // Admins can freeze a customer's login but never another admin - the admin
+    // panel doesn't expose an equivalent employee-suspension flow here, so this
+    // stays a hard block rather than a role check the caller could satisfy.
     public Customer setFrozen(String customerId, boolean frozen) {
         Customer customer = getCustomer(customerId);
+        if (customer.isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin accounts can't be frozen");
+        }
         if (frozen) {
             customer.freezeAccount();
         } else {

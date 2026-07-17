@@ -552,9 +552,32 @@ th {
   font-size: 0.9rem;
 }
 
+/* Profile page */
+
+.profile-card {
+  background: var(--citi-white);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  padding: 2rem;
+  max-width: 520px;
+  border-top: 4px solid var(--citi-blue-700);
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.profile-card-header h2 {
+  margin: 0;
+}
+
 /* Account detail page */
 
 .account-detail-header {
+  position: relative;
   background: var(--citi-white);
   border-radius: 10px;
   box-shadow: var(--shadow-sm);
@@ -562,6 +585,51 @@ th {
   text-align: center;
   margin-bottom: 1.5rem;
   border-top: 4px solid var(--citi-red);
+}
+
+.card-gear {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 5;
+}
+
+.card-gear .settings-menu-list {
+  left: auto;
+  right: 0;
+}
+
+.details-toggle {
+  margin-top: 1rem;
+}
+
+.details-toggle summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--citi-blue-700);
+  font-weight: 600;
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+.details-toggle summary::-webkit-details-marker {
+  display: none;
+}
+
+.details-toggle summary::after {
+  content: '▾';
+  transition: transform 0.15s ease;
+}
+
+.details-toggle[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.details-toggle .details-grid {
+  padding: 1rem 0 0;
+  text-align: left;
 }
 
 .account-detail-header .account-mask {
@@ -635,6 +703,21 @@ th {
 
 .settings-menu-trigger {
   font-size: 0.9rem;
+}
+
+.settings-menu-trigger-icon {
+  padding: 0.45rem 0.6rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.settings-menu-item-wrap {
+  display: block;
+}
+
+.settings-menu-item-wrap .settings-menu-item {
+  width: 100%;
 }
 
 .settings-menu-list {

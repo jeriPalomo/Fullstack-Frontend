@@ -6,7 +6,6 @@ import com.citibank.customerapi.model.Customer;
 import com.citibank.customerapi.service.AccountService;
 import com.citibank.customerapi.service.CustomerService;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -72,14 +71,9 @@ public class CustomerController {
         return new CustomerResponse(customerService.createCustomer(customer));
     }
 
-    // DELETE /api/customers/{id} -> removes a customer, or 404 if it doesn't exist
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/{customerId}")
-    public void deleteCustomer(@PathVariable String customerId) {
-        customerService.deleteCustomer(customerId);
-    }
-
-    // PUT /api/customers/{id}/freeze -> freezes the customer's login
+    // PUT /api/customers/{id}/freeze -> freezes the customer's login. Admins can
+    // only freeze customers (never delete), and never another admin - the latter
+    // is enforced in CustomerService.setFrozen since it applies to both directions.
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{customerId}/freeze")
     public CustomerResponse freezeCustomer(@PathVariable String customerId) {

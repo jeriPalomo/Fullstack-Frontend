@@ -58,7 +58,6 @@ export const api = {
   getCustomers: () => request('/customers'),
   getCustomer: (customerId) => request(`/customers/${encodeURIComponent(customerId)}`),
   createCustomer: (customer) => request('/customers', { method: 'POST', body: JSON.stringify(customer) }),
-  deleteCustomer: (customerId) => request(`/customers/${encodeURIComponent(customerId)}`, { method: 'DELETE' }),
   freezeCustomer: (customerId) => request(`/customers/${encodeURIComponent(customerId)}/freeze`, { method: 'PUT' }),
   unfreezeCustomer: (customerId) => request(`/customers/${encodeURIComponent(customerId)}/unfreeze`, { method: 'PUT' }),
   getCustomerAccounts: (customerId) => request(`/customers/${encodeURIComponent(customerId)}/accounts`),

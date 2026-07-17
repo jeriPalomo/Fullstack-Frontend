@@ -45,10 +45,9 @@ public class AccountController {
     }
 
     // POST /api/accounts -> opens a new account, 409 if the account number is taken.
-    // Self-service callers may only open accounts for themselves; admins may open for
-    // anyone (this is how admins open Certificates on a customer's behalf) - creation
-    // is the one write admins keep, since it isn't editing an existing account.
-    @PreAuthorize("hasRole('ADMIN') or #request.primaryOwner == authentication.name")
+    // Self-service callers may open any account type for themselves; admins may only
+    // open Certificates on a customer's behalf (Checking/Savings are self-service only).
+    @PreAuthorize("(hasRole('ADMIN') and #request.accountType == 'Certificate') or #request.primaryOwner == authentication.name")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AccountResponse createAccount(@RequestBody CreateAccountRequest request) {
@@ -63,24 +62,24 @@ public class AccountController {
         return accountService.toResponse(accountService.renameAccount(accountNumber, request.getNickname()));
     }
 
-    // DELETE /api/accounts/{accountNumber} -> soft-closes an account (balance must be zero), or 404
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
+    // DELETE /api/accounts/{accountNumber} -> soft-closes an account (balance must be zero), or 404.
+    // Primary-owner-only: admins can view accounts but never freeze or delete them.
+    @PreAuthorize("@accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @DeleteMapping("/{accountNumber}")
     public void deleteAccount(@PathVariable String accountNumber) {
         accountService.deleteAccount(accountNumber);
     }
 
     // PUT /api/accounts/{accountNumber}/freeze -> freezes the account (blocks deposit/withdraw/transfer/joint-owner changes).
-    // Freeze/unfreeze/close are account-lifecycle actions (not edits to the account's
-    // details), so admins keep these alongside the primary owner.
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
+    // Primary-owner-only: admins can view accounts but never freeze or delete them.
+    @PreAuthorize("@accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @PutMapping("/{accountNumber}/freeze")
     public AccountResponse freezeAccount(@PathVariable String accountNumber) {
         return accountService.toResponse(accountService.setFrozen(accountNumber, true));
     }
 
     // PUT /api/accounts/{accountNumber}/unfreeze -> unfreezes the account
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
+    @PreAuthorize("@accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @PutMapping("/{accountNumber}/unfreeze")
     public AccountResponse unfreezeAccount(@PathVariable String accountNumber) {
         return accountService.toResponse(accountService.setFrozen(accountNumber, false));

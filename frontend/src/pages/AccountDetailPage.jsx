@@ -137,6 +137,29 @@ export function AccountDetailPage() {
           <Link className="back-link" to="/">&larr; Back to accounts</Link>
 
           <div className="account-detail-header">
+            {isPrimaryOwner && account.status !== 'CLOSED' && (
+              <div className="card-gear">
+                <SettingsMenu
+                  label="Account Settings"
+                  iconOnly
+                  items={[
+                    {
+                      key: 'freeze',
+                      label: account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account',
+                      onSelect: openFreezeModal,
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Delete Account',
+                      danger: true,
+                      disabled: account.balance !== 0,
+                      disabledReason: account.balance !== 0 ? 'Balance must be $0.00 to close this account.' : undefined,
+                      onSelect: () => setShowDeleteModal(true),
+                    },
+                  ]}
+                />
+              </div>
+            )}
             <EditableAccountName
               accountNumber={account.accountNumber}
               nickname={account.nickname || account.accountType}
@@ -159,27 +182,24 @@ export function AccountDetailPage() {
               </div>
             )}
 
-            {isPrimaryOwner && account.status !== 'CLOSED' && (
-              <div className="account-detail-actions">
-                <SettingsMenu
-                  label="Account Settings"
-                  items={[
-                    {
-                      key: 'freeze',
-                      label: account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account',
-                      onSelect: openFreezeModal,
-                    },
-                    {
-                      key: 'delete',
-                      label: 'Delete Account',
-                      danger: true,
-                      disabled: account.balance !== 0,
-                      onSelect: () => setShowDeleteModal(true),
-                    },
-                  ]}
-                />
-              </div>
-            )}
+            <details className="details-toggle">
+              <summary>Account Details</summary>
+              <dl className="details-grid">
+                <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
+                <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
+                <div><dt>Routing Number</dt><dd>{account.routingNumber}</dd></div>
+                <div><dt>Primary Owner</dt><dd>{account.primaryOwnerName}</dd></div>
+                <div><dt>Joint Owner(s)</dt><dd>{account.jointOwnerNames.length ? account.jointOwnerNames.join(', ') : 'None'}</dd></div>
+                <div><dt>APY</dt><dd>{account.apy}%</dd></div>
+                <div><dt>Direct Deposit</dt><dd>{account.directDeposit ? 'Yes' : 'No'}</dd></div>
+                {account.accountType === 'Certificate' && (
+                  <>
+                    <div><dt>Term</dt><dd>{account.termMonths} months</dd></div>
+                    <div><dt>Maturity Date</dt><dd>{account.maturityDate}</dd></div>
+                  </>
+                )}
+              </dl>
+            </details>
           </div>
 
           <Modal
@@ -226,25 +246,6 @@ export function AccountDetailPage() {
               <div><dt>Balance</dt><dd>{currency(account.balance)}</dd></div>
             </dl>
           </ConfirmDangerModal>
-
-          <details className="details-dropdown">
-            <summary>Account details</summary>
-            <dl className="details-grid">
-              <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
-              <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
-              <div><dt>Routing Number</dt><dd>{account.routingNumber}</dd></div>
-              <div><dt>Primary Owner</dt><dd>{account.primaryOwnerName}</dd></div>
-              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwnerNames.length ? account.jointOwnerNames.join(', ') : 'None'}</dd></div>
-              <div><dt>APY</dt><dd>{account.apy}%</dd></div>
-              <div><dt>Direct Deposit</dt><dd>{account.directDeposit ? 'Yes' : 'No'}</dd></div>
-              {account.accountType === 'Certificate' && (
-                <>
-                  <div><dt>Term</dt><dd>{account.termMonths} months</dd></div>
-                  <div><dt>Maturity Date</dt><dd>{account.maturityDate}</dd></div>
-                </>
-              )}
-            </dl>
-          </details>
 
           <section className="transaction-section">
             <h2>Transaction History</h2>

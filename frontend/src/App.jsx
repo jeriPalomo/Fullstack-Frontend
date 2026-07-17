@@ -8,6 +8,7 @@ import { AccountDetailPage } from './pages/AccountDetailPage';
 import { DepositPage } from './pages/DepositPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 import { TransferPage } from './pages/TransferPage';
+import { ProfilePage } from './pages/ProfilePage';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 // Top-level route table. AuthProvider wraps everything so login state is
@@ -57,6 +58,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TransferPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transfer"
+            element={
+              <ProtectedRoute>
+                <TransferPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
