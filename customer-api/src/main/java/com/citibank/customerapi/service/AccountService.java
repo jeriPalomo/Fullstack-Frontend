@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.List;
 
 /*
@@ -53,6 +54,18 @@ public class AccountService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer " + request.getPrimaryOwner() + " not found");
         }
 
+        // Term/maturity only ever apply to Certificates - any value sent for another
+        // account type is ignored so the maturity lock can never apply elsewhere.
+        Integer termMonths = null;
+        LocalDate maturityDate = null;
+        if ("Certificate".equals(request.getAccountType())) {
+            termMonths = request.getTermMonths();
+            if (termMonths == null || termMonths <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Term length (months) is required for a Certificate account");
+            }
+            maturityDate = LocalDate.now().plusMonths(termMonths);
+        }
+
         Accounts account = new Accounts(
                 request.getAccountType(),
                 generateAccountNumber(),
@@ -61,7 +74,9 @@ public class AccountService {
                 ROUTING_NUMBER,
                 request.getBalance(),
                 request.isDirectDeposit(),
-                request.getApy());
+                request.getApy(),
+                termMonths,
+                maturityDate);
 
         String nickname = request.getNickname();
         account.setNickname(nickname != null && !nickname.isBlank() ? nickname : request.getAccountType());
@@ -122,6 +137,7 @@ public class AccountService {
         requirePositiveAmount(amount);
         Accounts account = getAccount(accountNumber);
         requireTransactable(account);
+        requireMatured(account);
         if (amount > account.getBalance()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient funds");
         }
@@ -139,6 +155,9 @@ public class AccountService {
         Accounts toAccount = getAccount(toAccountNumber);
         requireTransactable(fromAccount);
         requireTransactable(toAccount);
+        // Only the source account's maturity lock applies - receiving a transfer
+        // into a Certificate isn't restricted.
+        requireMatured(fromAccount);
 
         if (!fromAccount.transferTo(toAccount, amount)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transfer failed: insufficient funds or invalid amount");
@@ -182,6 +201,13 @@ public class AccountService {
     private void requireNotFrozen(Accounts account) {
         if (account.isFrozen()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account " + account.getAccountNumber() + " is frozen");
+        }
+    }
+
+    private void requireMatured(Accounts account) {
+        if (account.isCertificate() && !account.isMatured()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Certificate " + account.getAccountNumber() + " is locked until it matures on " + account.getMaturityDate());
         }
     }
 

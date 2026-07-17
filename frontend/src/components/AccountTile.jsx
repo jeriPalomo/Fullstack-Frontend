@@ -15,6 +15,7 @@ export function AccountTile({ account }) {
       </p>
       <p className="muted">•••• {last4}</p>
       <p className="tile-balance">{currency(account.balance)}</p>
+      {account.accountType === 'Certificate' && <p className="muted">Matures {account.maturityDate}</p>}
     </Link>
   );
 }

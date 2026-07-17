@@ -66,6 +66,7 @@ export function AccountDetailPage() {
   }, [accountNumber]);
 
   const isOwner = account && (account.primaryOwner === customer.customerId || account.jointOwners.includes(customer.customerId));
+  const locked = account && account.accountType === 'Certificate' && !account.matured;
   // Freeze/close change the account's lifecycle state, so only the primary
   // owner can trigger them - joint owners can view and transact, not close.
   const isPrimaryOwner = account && account.primaryOwner === customer.customerId;
@@ -146,12 +147,13 @@ export function AccountDetailPage() {
             <span className={`status-badge status-badge-${account.status.toLowerCase()}`}>{account.status}</span>
 
             {account.status === 'FROZEN' && <p className="muted">This account is frozen. Deposits, withdrawals, and transfers are disabled.</p>}
+            {locked && <p className="muted">This Certificate is locked until it matures on {account.maturityDate}. Deposits are still allowed.</p>}
 
             {account.status !== 'CLOSED' && (
               <div className="account-detail-actions">
                 <button className="primary" disabled={account.status === 'FROZEN'} onClick={() => navigate(`/accounts/${accountNumber}/deposit`)}>Deposit</button>
-                <button className="primary" disabled={account.status === 'FROZEN'} onClick={() => navigate(`/accounts/${accountNumber}/withdraw`)}>Withdraw</button>
-                <button className="primary" disabled={account.status === 'FROZEN'} onClick={() => navigate(`/accounts/${accountNumber}/transfer`)}>Transfer</button>
+                <button className="primary" disabled={account.status === 'FROZEN' || locked} onClick={() => navigate(`/accounts/${accountNumber}/withdraw`)}>Withdraw</button>
+                <button className="primary" disabled={account.status === 'FROZEN' || locked} onClick={() => navigate(`/accounts/${accountNumber}/transfer`)}>Transfer</button>
               </div>
             )}
 
@@ -214,6 +216,12 @@ export function AccountDetailPage() {
               <div><dt>Joint Owner(s)</dt><dd>{account.jointOwners.length ? account.jointOwners.join(', ') : 'None'}</dd></div>
               <div><dt>APY</dt><dd>{account.apy}%</dd></div>
               <div><dt>Direct Deposit</dt><dd>{account.directDeposit ? 'Yes' : 'No'}</dd></div>
+              {account.accountType === 'Certificate' && (
+                <>
+                  <div><dt>Term</dt><dd>{account.termMonths} months</dd></div>
+                  <div><dt>Maturity Date</dt><dd>{account.maturityDate}</dd></div>
+                </>
+              )}
             </dl>
           </details>
 

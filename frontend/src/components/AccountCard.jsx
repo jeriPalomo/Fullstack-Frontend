@@ -12,6 +12,8 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
   const [showHistory, setShowHistory] = useState(false);
   const status = account.status || 'ACTIVE';
   const canTransact = status === 'ACTIVE';
+  const locked = account.accountType === 'Certificate' && !account.matured;
+  const canWithdrawOrTransfer = canTransact && !locked;
 
   // Reads the amount input and returns it as a positive number, or null if invalid.
   function parsedAmount() {
@@ -25,6 +27,12 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
         <div>
           <h3>{account.nickname ? `${account.nickname} · ` : ''}{account.accountType} · {account.accountNumber}</h3>
           <p className="muted">Routing {account.routingNumber} · APY {account.apy}%</p>
+          {account.accountType === 'Certificate' && (
+            <p className="muted">
+              {account.termMonths}-month term · Matures {account.maturityDate}
+              {locked && <span className="status-badge status-badge-frozen"> Locked</span>}
+            </p>
+          )}
         </div>
         <div>
           <div className="balance">{currency(account.balance)}</div>
@@ -45,7 +53,7 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
         <button disabled={!canTransact} onClick={() => { const v = parsedAmount(); if (v) { onDeposit(account.accountNumber, v); setAmount(''); } }}>
           Deposit
         </button>
-        <button disabled={!canTransact} onClick={() => { const v = parsedAmount(); if (v) { onWithdraw(account.accountNumber, v); setAmount(''); } }}>
+        <button disabled={!canWithdrawOrTransfer} onClick={() => { const v = parsedAmount(); if (v) { onWithdraw(account.accountNumber, v); setAmount(''); } }}>
           Withdraw
         </button>
       </div>
@@ -55,11 +63,11 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
           type="text"
           placeholder="Transfer to account #"
           value={transferTo}
-          disabled={!canTransact}
+          disabled={!canWithdrawOrTransfer}
           onChange={(e) => setTransferTo(e.target.value)}
         />
         <button
-          disabled={!canTransact}
+          disabled={!canWithdrawOrTransfer}
           onClick={() => {
             const v = parsedAmount();
             if (v && transferTo.trim()) {

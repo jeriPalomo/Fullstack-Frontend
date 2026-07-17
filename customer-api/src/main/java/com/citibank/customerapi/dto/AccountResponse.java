@@ -3,6 +3,7 @@ package com.citibank.customerapi.dto;
 import com.citibank.customerapi.model.Accounts;
 import com.citibank.customerapi.model.Transaction;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class AccountResponse {
@@ -17,6 +18,9 @@ public class AccountResponse {
     private final double apy;
     private final List<Transaction> transactionHistory;
     private final String status;
+    private final Integer termMonths;
+    private final LocalDate maturityDate;
+    private final boolean matured;
 
     public AccountResponse(Accounts account) {
         this.accountType = account.getAccountType();
@@ -30,6 +34,9 @@ public class AccountResponse {
         this.apy = account.getAPY();
         this.transactionHistory = account.getTransactionHistory();
         this.status = account.getStatus().name();
+        this.termMonths = account.getTermMonths();
+        this.maturityDate = account.getMaturityDate();
+        this.matured = account.isMatured();
     }
 
     public String getAccountType() { return accountType; }
@@ -43,4 +50,7 @@ public class AccountResponse {
     public double getApy() { return apy; }
     public List<Transaction> getTransactionHistory() { return transactionHistory; }
     public String getStatus() { return status; }
+    public Integer getTermMonths() { return termMonths; }
+    public LocalDate getMaturityDate() { return maturityDate; }
+    public boolean isMatured() { return matured; }
 }

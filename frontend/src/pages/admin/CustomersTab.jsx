@@ -21,6 +21,7 @@ const emptyAccountForm = {
   balance: '',
   directDeposit: false,
   apy: '',
+  termMonths: '',
 };
 
 // Admin's single directory view: a list of customers (searchable by name, not
@@ -140,6 +141,7 @@ export function CustomersTab({ showBanner }) {
         nickname: accountForm.nickname.trim() || undefined,
         balance: Number(accountForm.balance),
         apy: Number(accountForm.apy),
+        termMonths: accountForm.accountType === 'Certificate' ? Number(accountForm.termMonths) : undefined,
       });
       showBanner('success', `Account ${created.accountNumber} opened.`);
       setAccountForm(emptyAccountForm);
@@ -273,6 +275,9 @@ export function CustomersTab({ showBanner }) {
                       <input placeholder="Nickname (optional)" value={accountForm.nickname} onChange={updateAccountField('nickname')} />
                       <input required type="number" step="0.01" placeholder="Initial Balance" value={accountForm.balance} onChange={updateAccountField('balance')} />
                       <input required type="number" step="0.01" placeholder="APY %" value={accountForm.apy} onChange={updateAccountField('apy')} />
+                      {accountForm.accountType === 'Certificate' && (
+                        <input required type="number" min="1" step="1" placeholder="Term (months)" value={accountForm.termMonths} onChange={updateAccountField('termMonths')} />
+                      )}
                       <label className="checkbox-label">
                         <input type="checkbox" checked={accountForm.directDeposit} onChange={updateAccountField('directDeposit')} />
                         Direct Deposit

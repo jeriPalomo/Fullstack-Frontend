@@ -11,6 +11,7 @@ public class CreateAccountRequest {
     private double balance;
     private boolean directDeposit;
     private double apy;
+    private Integer termMonths;
 
     public String getAccountType() { return accountType; }
     public void setAccountType(String accountType) { this.accountType = accountType; }
@@ -29,4 +30,7 @@ public class CreateAccountRequest {
 
     public double getApy() { return apy; }
     public void setApy(double apy) { this.apy = apy; }
+
+    public Integer getTermMonths() { return termMonths; }
+    public void setTermMonths(Integer termMonths) { this.termMonths = termMonths; }
 }
