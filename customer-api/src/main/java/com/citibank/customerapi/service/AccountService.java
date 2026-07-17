@@ -1,5 +1,6 @@
 package com.citibank.customerapi.service;
 
+import com.citibank.customerapi.dto.AccountResponse;
 import com.citibank.customerapi.dto.CreateAccountRequest;
 import com.citibank.customerapi.model.Accounts;
 import com.citibank.customerapi.model.Customer;
@@ -44,6 +45,19 @@ public class AccountService {
     public Accounts getAccount(String accountNumber) {
         return accountRepository.findById(accountNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account " + accountNumber + " not found"));
+    }
+
+    // Resolves primaryOwner/jointOwners customerIds to display names here, server-side,
+    // since a non-admin caller has no route to another customer's record - this is the
+    // one place both controllers go through to build an AccountResponse.
+    public AccountResponse toResponse(Accounts account) {
+        String primaryOwnerName = customerRepository.findById(account.getPrimaryOwner())
+                .map(Customer::getName)
+                .orElse(account.getPrimaryOwner());
+        List<String> jointOwnerNames = account.getJointOwners().stream()
+                .map(id -> customerRepository.findById(id).map(Customer::getName).orElse(id))
+                .toList();
+        return new AccountResponse(account, primaryOwnerName, jointOwnerNames);
     }
 
     // Account numbers are never chosen by the caller - always generated here so

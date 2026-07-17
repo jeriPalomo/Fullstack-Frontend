@@ -3,23 +3,14 @@ import { useState } from 'react';
 const currency = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const isCredit = (type) => type === 'DEPOSIT' || type === 'TRANSFER_IN';
 
-// Reusable card showing one account's balance plus deposit/withdraw/transfer controls.
-// Used on both the customer dashboard and the admin accounts tab; `adminActions`
-// lets the admin view slot in extra buttons (e.g. Close Account) without a second component.
-export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminActions }) {
-  const [amount, setAmount] = useState('');
-  const [transferTo, setTransferTo] = useState('');
+// Read-only account summary used on the admin panel: balance, status, and
+// transaction history, plus an `adminActions` slot for the Settings menu.
+// Admins can view an account's details but never deposit/withdraw/transfer/
+// rename it - those stay owner-only, both here and enforced server-side.
+export function AccountCard({ account, adminActions }) {
   const [showHistory, setShowHistory] = useState(false);
   const status = account.status || 'ACTIVE';
-  const canTransact = status === 'ACTIVE';
   const locked = account.accountType === 'Certificate' && !account.matured;
-  const canWithdrawOrTransfer = canTransact && !locked;
-
-  // Reads the amount input and returns it as a positive number, or null if invalid.
-  function parsedAmount() {
-    const value = Number(amount);
-    return value > 0 ? value : null;
-  }
 
   return (
     <div className="account-card">
@@ -38,47 +29,6 @@ export function AccountCard({ account, onDeposit, onWithdraw, onTransfer, adminA
           <div className="balance">{currency(account.balance)}</div>
           <span className={`status-badge status-badge-${status.toLowerCase()}`}>{status}</span>
         </div>
-      </div>
-
-      <div className="account-actions">
-        <input
-          type="number"
-          min="0.01"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          disabled={!canTransact}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <button disabled={!canTransact} onClick={() => { const v = parsedAmount(); if (v) { onDeposit(account.accountNumber, v); setAmount(''); } }}>
-          Deposit
-        </button>
-        <button disabled={!canWithdrawOrTransfer} onClick={() => { const v = parsedAmount(); if (v) { onWithdraw(account.accountNumber, v); setAmount(''); } }}>
-          Withdraw
-        </button>
-      </div>
-
-      <div className="account-actions">
-        <input
-          type="text"
-          placeholder="Transfer to account #"
-          value={transferTo}
-          disabled={!canWithdrawOrTransfer}
-          onChange={(e) => setTransferTo(e.target.value)}
-        />
-        <button
-          disabled={!canWithdrawOrTransfer}
-          onClick={() => {
-            const v = parsedAmount();
-            if (v && transferTo.trim()) {
-              onTransfer(account.accountNumber, transferTo.trim(), v);
-              setAmount('');
-              setTransferTo('');
-            }
-          }}
-        >
-          Transfer
-        </button>
       </div>
 
       {adminActions}

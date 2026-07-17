@@ -34,30 +34,33 @@ public class AccountController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<AccountResponse> getAllAccounts() {
-        return accountService.getAllAccounts().stream().map(AccountResponse::new).toList();
+        return accountService.getAllAccounts().stream().map(accountService::toResponse).toList();
     }
 
     // GET /api/accounts/{accountNumber} -> a single account, or 404
     @PreAuthorize("hasRole('ADMIN') or @accountAccess.isOwner(#accountNumber, authentication)")
     @GetMapping("/{accountNumber}")
     public AccountResponse getAccount(@PathVariable String accountNumber) {
-        return new AccountResponse(accountService.getAccount(accountNumber));
+        return accountService.toResponse(accountService.getAccount(accountNumber));
     }
 
     // POST /api/accounts -> opens a new account, 409 if the account number is taken.
-    // Self-service callers may only open accounts for themselves; admins may open for anyone.
+    // Self-service callers may only open accounts for themselves; admins may open for
+    // anyone (this is how admins open Certificates on a customer's behalf) - creation
+    // is the one write admins keep, since it isn't editing an existing account.
     @PreAuthorize("hasRole('ADMIN') or #request.primaryOwner == authentication.name")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AccountResponse createAccount(@RequestBody CreateAccountRequest request) {
-        return new AccountResponse(accountService.createAccount(request));
+        return accountService.toResponse(accountService.createAccount(request));
     }
 
-    // PUT /api/accounts/{accountNumber}/nickname -> renames an account, or 404
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isOwner(#accountNumber, authentication)")
+    // PUT /api/accounts/{accountNumber}/nickname -> renames an account, or 404.
+    // Owner-only: admins can view accounts but not edit their details.
+    @PreAuthorize("@accountAccess.isOwner(#accountNumber, authentication)")
     @PutMapping("/{accountNumber}/nickname")
     public AccountResponse renameAccount(@PathVariable String accountNumber, @RequestBody RenameAccountRequest request) {
-        return new AccountResponse(accountService.renameAccount(accountNumber, request.getNickname()));
+        return accountService.toResponse(accountService.renameAccount(accountNumber, request.getNickname()));
     }
 
     // DELETE /api/accounts/{accountNumber} -> soft-closes an account (balance must be zero), or 404
@@ -67,46 +70,50 @@ public class AccountController {
         accountService.deleteAccount(accountNumber);
     }
 
-    // PUT /api/accounts/{accountNumber}/freeze -> freezes the account (blocks deposit/withdraw/transfer/joint-owner changes)
+    // PUT /api/accounts/{accountNumber}/freeze -> freezes the account (blocks deposit/withdraw/transfer/joint-owner changes).
+    // Freeze/unfreeze/close are account-lifecycle actions (not edits to the account's
+    // details), so admins keep these alongside the primary owner.
     @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @PutMapping("/{accountNumber}/freeze")
     public AccountResponse freezeAccount(@PathVariable String accountNumber) {
-        return new AccountResponse(accountService.setFrozen(accountNumber, true));
+        return accountService.toResponse(accountService.setFrozen(accountNumber, true));
     }
 
     // PUT /api/accounts/{accountNumber}/unfreeze -> unfreezes the account
     @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @PutMapping("/{accountNumber}/unfreeze")
     public AccountResponse unfreezeAccount(@PathVariable String accountNumber) {
-        return new AccountResponse(accountService.setFrozen(accountNumber, false));
+        return accountService.toResponse(accountService.setFrozen(accountNumber, false));
     }
 
-    // POST /api/accounts/{accountNumber}/deposit
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isOwner(#accountNumber, authentication)")
+    // POST /api/accounts/{accountNumber}/deposit -> owner-only; admins can view but not edit.
+    @PreAuthorize("@accountAccess.isOwner(#accountNumber, authentication)")
     @PostMapping("/{accountNumber}/deposit")
     public AccountResponse deposit(@PathVariable String accountNumber, @RequestBody AmountRequest request) {
-        return new AccountResponse(accountService.deposit(accountNumber, request.getAmount()));
+        return accountService.toResponse(accountService.deposit(accountNumber, request.getAmount()));
     }
 
-    // POST /api/accounts/{accountNumber}/withdraw
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isOwner(#accountNumber, authentication)")
+    // POST /api/accounts/{accountNumber}/withdraw -> owner-only; admins can view but not edit.
+    @PreAuthorize("@accountAccess.isOwner(#accountNumber, authentication)")
     @PostMapping("/{accountNumber}/withdraw")
     public AccountResponse withdraw(@PathVariable String accountNumber, @RequestBody AmountRequest request) {
-        return new AccountResponse(accountService.withdraw(accountNumber, request.getAmount()));
+        return accountService.toResponse(accountService.withdraw(accountNumber, request.getAmount()));
     }
 
     // POST /api/accounts/{accountNumber}/transfer -> ownership is checked against the FROM
     // account (the path variable); the destination account is not ownership-checked.
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isOwner(#accountNumber, authentication)")
+    // Owner-only; admins can view but not edit.
+    @PreAuthorize("@accountAccess.isOwner(#accountNumber, authentication)")
     @PostMapping("/{accountNumber}/transfer")
     public AccountResponse transfer(@PathVariable String accountNumber, @RequestBody TransferRequest request) {
-        return new AccountResponse(accountService.transfer(accountNumber, request.getToAccountNumber(), request.getAmount()));
+        return accountService.toResponse(accountService.transfer(accountNumber, request.getToAccountNumber(), request.getAmount()));
     }
 
-    // POST /api/accounts/{accountNumber}/joint-owners/{customerId}
-    @PreAuthorize("hasRole('ADMIN') or @accountAccess.isPrimaryOwner(#accountNumber, authentication)")
+    // POST /api/accounts/{accountNumber}/joint-owners/{customerId} -> primary-owner-only;
+    // admins can view but not edit.
+    @PreAuthorize("@accountAccess.isPrimaryOwner(#accountNumber, authentication)")
     @PostMapping("/{accountNumber}/joint-owners/{customerId}")
     public AccountResponse addJointOwner(@PathVariable String accountNumber, @PathVariable String customerId) {
-        return new AccountResponse(accountService.addJointOwner(accountNumber, customerId));
+        return accountService.toResponse(accountService.addJointOwner(accountNumber, customerId));
     }
 }

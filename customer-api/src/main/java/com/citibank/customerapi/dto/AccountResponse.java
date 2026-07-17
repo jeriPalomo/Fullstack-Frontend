@@ -11,7 +11,12 @@ public class AccountResponse {
     private final String accountNumber;
     private final String nickname;
     private final String primaryOwner;
+    // Display name of primaryOwner, resolved server-side (via AccountService.toResponse)
+    // so the frontend never has to look up a customerId itself - a non-admin caller
+    // has no route to another customer's record, so this must be populated here.
+    private final String primaryOwnerName;
     private final List<String> jointOwners;
+    private final List<String> jointOwnerNames;
     private final String routingNumber;
     private final double balance;
     private final boolean directDeposit;
@@ -22,12 +27,14 @@ public class AccountResponse {
     private final LocalDate maturityDate;
     private final boolean matured;
 
-    public AccountResponse(Accounts account) {
+    public AccountResponse(Accounts account, String primaryOwnerName, List<String> jointOwnerNames) {
         this.accountType = account.getAccountType();
         this.accountNumber = account.getAccountNumber();
         this.nickname = account.getNickname();
         this.primaryOwner = account.getPrimaryOwner();
+        this.primaryOwnerName = primaryOwnerName;
         this.jointOwners = account.getJointOwners();
+        this.jointOwnerNames = jointOwnerNames;
         this.routingNumber = account.getRoutingNumber();
         this.balance = account.getBalance();
         this.directDeposit = account.isDirectDeposit();
@@ -43,7 +50,9 @@ public class AccountResponse {
     public String getAccountNumber() { return accountNumber; }
     public String getNickname() { return nickname; }
     public String getPrimaryOwner() { return primaryOwner; }
+    public String getPrimaryOwnerName() { return primaryOwnerName; }
     public List<String> getJointOwners() { return jointOwners; }
+    public List<String> getJointOwnerNames() { return jointOwnerNames; }
     public String getRoutingNumber() { return routingNumber; }
     public double getBalance() { return balance; }
     public boolean isDirectDeposit() { return directDeposit; }

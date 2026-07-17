@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AccountCard } from '../../components/AccountCard';
 import { Modal } from '../../components/Modal';
+import { ConfirmDangerModal } from '../../components/ConfirmDangerModal';
+import { SettingsMenu } from '../../components/SettingsMenu';
 import { api } from '../../api/client';
 
 const currency = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -25,10 +27,11 @@ const emptyAccountForm = {
 };
 
 // Admin's single directory view: a list of customers (searchable by name, not
-// customerId) where each row expands to lazy-load and manage that customer's
-// own accounts. Replaces the old separate Customers/Accounts tabs - looking up
-// an account by customerId wasn't useful to an admin, so accounts now live
-// under the person they belong to instead of a flat global list.
+// customerId) where each row expands to lazy-load that customer's own
+// accounts. Admins can view accounts and open new ones (including
+// Certificates) here, but every account-editing action (deposit/withdraw/
+// transfer/rename) is owner-only and enforced server-side - the admin panel
+// only ever exposes account-level Settings (freeze/delete), not edits.
 export function CustomersTab({ showBanner }) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +48,18 @@ export function CustomersTab({ showBanner }) {
   // { customerId, account } for the account pending freeze/unfreeze confirmation.
   const [pendingFreeze, setPendingFreeze] = useState(null);
   const [freezing, setFreezing] = useState(false);
+
+  // { customerId, account } for the account pending a type-to-confirm delete.
+  const [pendingAccountDelete, setPendingAccountDelete] = useState(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  // Customer pending freeze/unfreeze confirmation (freezes login, not an account).
+  const [pendingCustomerFreeze, setPendingCustomerFreeze] = useState(null);
+  const [customerFreezing, setCustomerFreezing] = useState(false);
+
+  // Customer pending a type-to-confirm delete.
+  const [pendingCustomerDelete, setPendingCustomerDelete] = useState(null);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -107,17 +122,24 @@ export function CustomersTab({ showBanner }) {
     }
   }
 
-  async function handleDeleteCustomer(customerId) {
+  async function confirmCustomerDelete() {
+    const customer = pendingCustomerDelete;
+    setDeletingCustomer(true);
     try {
-      await api.deleteCustomer(customerId);
-      showBanner('success', `Customer ${customerId} deleted.`);
+      await api.deleteCustomer(customer.customerId);
+      showBanner('success', `Customer ${customer.name} deleted.`);
+      setPendingCustomerDelete(null);
       load();
     } catch (err) {
       showBanner('error', err.message);
+    } finally {
+      setDeletingCustomer(false);
     }
   }
 
-  async function handleToggleCustomerFrozen(customer) {
+  async function confirmCustomerFreeze() {
+    const customer = pendingCustomerFreeze;
+    setCustomerFreezing(true);
     try {
       if (customer.frozen) {
         await api.unfreezeCustomer(customer.customerId);
@@ -126,9 +148,12 @@ export function CustomersTab({ showBanner }) {
         await api.freezeCustomer(customer.customerId);
         showBanner('success', `${customer.name} frozen.`);
       }
+      setPendingCustomerFreeze(null);
       load();
     } catch (err) {
       showBanner('error', err.message);
+    } finally {
+      setCustomerFreezing(false);
     }
   }
 
@@ -152,13 +177,18 @@ export function CustomersTab({ showBanner }) {
     }
   }
 
-  async function handleDeleteAccount(customerId, accountNumber) {
+  async function confirmAccountDelete() {
+    const { customerId, account } = pendingAccountDelete;
+    setDeletingAccount(true);
     try {
-      await api.deleteAccount(accountNumber);
-      showBanner('success', `Account ${accountNumber} closed.`);
+      await api.deleteAccount(account.accountNumber);
+      showBanner('success', `Account ${account.accountNumber} closed.`);
+      setPendingAccountDelete(null);
       loadAccountsFor(customerId);
     } catch (err) {
       showBanner('error', err.message);
+    } finally {
+      setDeletingAccount(false);
     }
   }
 
@@ -183,36 +213,6 @@ export function CustomersTab({ showBanner }) {
       showBanner('error', err.message);
     } finally {
       setFreezing(false);
-    }
-  }
-
-  async function handleDeposit(customerId, accountNumber, amount) {
-    try {
-      await api.deposit(accountNumber, amount);
-      showBanner('success', `Deposited $${amount.toFixed(2)} into ${accountNumber}.`);
-      loadAccountsFor(customerId);
-    } catch (err) {
-      showBanner('error', err.message);
-    }
-  }
-
-  async function handleWithdraw(customerId, accountNumber, amount) {
-    try {
-      await api.withdraw(accountNumber, amount);
-      showBanner('success', `Withdrew $${amount.toFixed(2)} from ${accountNumber}.`);
-      loadAccountsFor(customerId);
-    } catch (err) {
-      showBanner('error', err.message);
-    }
-  }
-
-  async function handleTransfer(customerId, accountNumber, toAccountNumber, amount) {
-    try {
-      await api.transfer(accountNumber, toAccountNumber, amount);
-      showBanner('success', `Transferred $${amount.toFixed(2)} to ${toAccountNumber}.`);
-      loadAccountsFor(customerId);
-    } catch (err) {
-      showBanner('error', err.message);
     }
   }
 
@@ -258,8 +258,22 @@ export function CustomersTab({ showBanner }) {
 
                 <div className="customer-detail">
                   <div className="account-actions">
-                    <button onClick={() => handleToggleCustomerFrozen(c)}>{c.frozen ? 'Unfreeze' : 'Freeze'} Customer</button>
-                    <button className="danger" onClick={() => handleDeleteCustomer(c.customerId)}>Delete Customer</button>
+                    <SettingsMenu
+                      label="Customer Settings"
+                      items={[
+                        {
+                          key: 'freeze',
+                          label: c.frozen ? 'Unfreeze Customer' : 'Freeze Customer',
+                          onSelect: () => setPendingCustomerFreeze(c),
+                        },
+                        {
+                          key: 'delete',
+                          label: 'Delete Customer',
+                          danger: true,
+                          onSelect: () => setPendingCustomerDelete(c),
+                        },
+                      ]}
+                    />
                     <button onClick={() => setOpenAccountFormFor(openAccountFormFor === c.customerId ? null : c.customerId)}>
                       {openAccountFormFor === c.customerId ? 'Cancel' : '+ Open Account'}
                     </button>
@@ -296,20 +310,35 @@ export function CustomersTab({ showBanner }) {
                         <AccountCard
                           key={account.accountNumber}
                           account={account}
-                          onDeposit={(accountNumber, amount) => handleDeposit(c.customerId, accountNumber, amount)}
-                          onWithdraw={(accountNumber, amount) => handleWithdraw(c.customerId, accountNumber, amount)}
-                          onTransfer={(accountNumber, toAccountNumber, amount) => handleTransfer(c.customerId, accountNumber, toAccountNumber, amount)}
                           adminActions={
                             <div className="account-actions">
-                              <span className="muted">{account.primaryOwner === c.customerId ? 'Primary owner' : 'Joint owner'}</span>
-                              {account.status !== 'CLOSED' && (
-                                <button onClick={() => openFreezeModal(c.customerId, account)}>
-                                  {account.status === 'FROZEN' ? 'Unfreeze' : 'Freeze'}
-                                </button>
-                              )}
-                              <button className="danger" disabled={account.status === 'CLOSED'} onClick={() => handleDeleteAccount(c.customerId, account.accountNumber)}>
-                                Close Account
-                              </button>
+                              <span className="muted">
+                                {account.primaryOwner === c.customerId ? 'Primary owner' : `Joint owner · Primary: ${account.primaryOwnerName}`}
+                              </span>
+                              <SettingsMenu
+                                label="Account Settings"
+                                items={[
+                                  {
+                                    key: 'freeze',
+                                    label: account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account',
+                                    disabled: account.status === 'CLOSED',
+                                    onSelect: () => openFreezeModal(c.customerId, account),
+                                  },
+                                  {
+                                    key: 'delete-account',
+                                    label: 'Delete Account',
+                                    danger: true,
+                                    disabled: account.status === 'CLOSED',
+                                    onSelect: () => setPendingAccountDelete({ customerId: c.customerId, account }),
+                                  },
+                                  {
+                                    key: 'delete-customer',
+                                    label: 'Delete Customer',
+                                    danger: true,
+                                    onSelect: () => setPendingCustomerDelete(c),
+                                  },
+                                ]}
+                              />
                             </div>
                           }
                         />
@@ -342,8 +371,8 @@ export function CustomersTab({ showBanner }) {
               <div><dt>Account Type</dt><dd>{pendingFreeze.account.accountType}</dd></div>
               <div><dt>Account Number</dt><dd>{pendingFreeze.account.accountNumber}</dd></div>
               <div><dt>Routing Number</dt><dd>{pendingFreeze.account.routingNumber}</dd></div>
-              <div><dt>Primary Owner</dt><dd>{pendingFreeze.account.primaryOwner}</dd></div>
-              <div><dt>Joint Owner(s)</dt><dd>{pendingFreeze.account.jointOwners.length ? pendingFreeze.account.jointOwners.join(', ') : 'None'}</dd></div>
+              <div><dt>Primary Owner</dt><dd>{pendingFreeze.account.primaryOwnerName}</dd></div>
+              <div><dt>Joint Owner(s)</dt><dd>{pendingFreeze.account.jointOwnerNames.length ? pendingFreeze.account.jointOwnerNames.join(', ') : 'None'}</dd></div>
               <div><dt>Balance</dt><dd>{currency(pendingFreeze.account.balance)}</dd></div>
               <div><dt>Current Status</dt><dd><span className={`status-badge status-badge-${pendingFreeze.account.status.toLowerCase()}`}>{pendingFreeze.account.status}</span></dd></div>
             </dl>
@@ -353,6 +382,64 @@ export function CustomersTab({ showBanner }) {
                 : 'Freezing this account will immediately block all deposits, withdrawals, and transfers until it is unfrozen.'}
             </p>
           </>
+        )}
+      </Modal>
+
+      <ConfirmDangerModal
+        open={!!pendingAccountDelete}
+        onClose={() => setPendingAccountDelete(null)}
+        title="Delete this account?"
+        confirmText={pendingAccountDelete?.account.accountNumber}
+        confirmLabel="Delete Account"
+        busy={deletingAccount}
+        onConfirm={confirmAccountDelete}
+      >
+        {pendingAccountDelete && (
+          <dl className="details-grid">
+            <div><dt>Account Type</dt><dd>{pendingAccountDelete.account.accountType}</dd></div>
+            <div><dt>Account Number</dt><dd>{pendingAccountDelete.account.accountNumber}</dd></div>
+            <div><dt>Balance</dt><dd>{currency(pendingAccountDelete.account.balance)}</dd></div>
+          </dl>
+        )}
+      </ConfirmDangerModal>
+
+      <ConfirmDangerModal
+        open={!!pendingCustomerDelete}
+        onClose={() => setPendingCustomerDelete(null)}
+        title="Delete this customer?"
+        confirmText={pendingCustomerDelete?.userName}
+        confirmLabel="Delete Customer"
+        busy={deletingCustomer}
+        onConfirm={confirmCustomerDelete}
+      >
+        {pendingCustomerDelete && (
+          <dl className="details-grid">
+            <div><dt>Name</dt><dd>{pendingCustomerDelete.name}</dd></div>
+            <div><dt>Username</dt><dd>{pendingCustomerDelete.userName}</dd></div>
+            <div><dt>Email</dt><dd>{pendingCustomerDelete.email}</dd></div>
+          </dl>
+        )}
+      </ConfirmDangerModal>
+
+      <Modal
+        open={!!pendingCustomerFreeze}
+        onClose={() => setPendingCustomerFreeze(null)}
+        title={pendingCustomerFreeze?.frozen ? 'Unfreeze this customer?' : 'Freeze this customer?'}
+        actions={
+          <>
+            <button className="primary" disabled={customerFreezing} onClick={confirmCustomerFreeze}>
+              {pendingCustomerFreeze?.frozen ? 'Confirm Unfreeze' : 'Confirm Freeze'}
+            </button>
+            <button disabled={customerFreezing} onClick={() => setPendingCustomerFreeze(null)}>Cancel</button>
+          </>
+        }
+      >
+        {pendingCustomerFreeze && (
+          <p className="muted">
+            {pendingCustomerFreeze.frozen
+              ? `Unfreezing ${pendingCustomerFreeze.name} will restore their ability to log in.`
+              : `Freezing ${pendingCustomerFreeze.name} will immediately block them from logging in.`}
+          </p>
         )}
       </Modal>
     </div>

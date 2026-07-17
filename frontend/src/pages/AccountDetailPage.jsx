@@ -3,6 +3,8 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-route
 import { Layout } from '../components/Layout';
 import { EditableAccountName } from '../components/EditableAccountName';
 import { Modal } from '../components/Modal';
+import { ConfirmDangerModal } from '../components/ConfirmDangerModal';
+import { SettingsMenu } from '../components/SettingsMenu';
 import { useAuth } from '../context/AuthContext';
 import { useBanner } from '../hooks/useBanner';
 import { api } from '../api/client';
@@ -36,7 +38,7 @@ export function AccountDetailPage() {
   const [filters, setFilters] = useState(emptyFilters);
   const [freezing, setFreezing] = useState(false);
   const [showFreezeModal, setShowFreezeModal] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   // Deposit/Withdraw/Transfer pages navigate back here with a confirmation
@@ -94,7 +96,7 @@ export function AccountDetailPage() {
     try {
       await api.deleteAccount(accountNumber);
       showBanner('success', 'Account closed.');
-      setConfirmingDelete(false);
+      setShowDeleteModal(false);
       load();
     } catch (err) {
       showBanner('error', err.message);
@@ -159,20 +161,23 @@ export function AccountDetailPage() {
 
             {isPrimaryOwner && account.status !== 'CLOSED' && (
               <div className="account-detail-actions">
-                <button disabled={freezing} onClick={openFreezeModal}>
-                  {account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account'}
-                </button>
-                {!confirmingDelete ? (
-                  <button className="danger" onClick={() => setConfirmingDelete(true)}>Delete Account</button>
-                ) : (
-                  <span className="account-actions">
-                    <span className="muted">
-                      {account.balance !== 0 ? 'Balance must be $0.00 to close this account.' : 'This can\'t be undone.'}
-                    </span>
-                    <button className="danger" disabled={deleting || account.balance !== 0} onClick={handleDelete}>Confirm Delete</button>
-                    <button disabled={deleting} onClick={() => setConfirmingDelete(false)}>Cancel</button>
-                  </span>
-                )}
+                <SettingsMenu
+                  label="Account Settings"
+                  items={[
+                    {
+                      key: 'freeze',
+                      label: account.status === 'FROZEN' ? 'Unfreeze Account' : 'Freeze Account',
+                      onSelect: openFreezeModal,
+                    },
+                    {
+                      key: 'delete',
+                      label: 'Delete Account',
+                      danger: true,
+                      disabled: account.balance !== 0,
+                      onSelect: () => setShowDeleteModal(true),
+                    },
+                  ]}
+                />
               </div>
             )}
           </div>
@@ -194,8 +199,8 @@ export function AccountDetailPage() {
               <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
               <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
               <div><dt>Routing Number</dt><dd>{account.routingNumber}</dd></div>
-              <div><dt>Primary Owner</dt><dd>{account.primaryOwner}</dd></div>
-              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwners.length ? account.jointOwners.join(', ') : 'None'}</dd></div>
+              <div><dt>Primary Owner</dt><dd>{account.primaryOwnerName}</dd></div>
+              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwnerNames.length ? account.jointOwnerNames.join(', ') : 'None'}</dd></div>
               <div><dt>Balance</dt><dd>{currency(account.balance)}</dd></div>
               <div><dt>Current Status</dt><dd><span className={`status-badge status-badge-${account.status.toLowerCase()}`}>{account.status}</span></dd></div>
             </dl>
@@ -206,14 +211,30 @@ export function AccountDetailPage() {
             </p>
           </Modal>
 
+          <ConfirmDangerModal
+            open={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            title="Delete this account?"
+            confirmText={account.accountNumber}
+            confirmLabel="Delete Account"
+            busy={deleting}
+            onConfirm={handleDelete}
+          >
+            <dl className="details-grid">
+              <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
+              <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
+              <div><dt>Balance</dt><dd>{currency(account.balance)}</dd></div>
+            </dl>
+          </ConfirmDangerModal>
+
           <details className="details-dropdown">
             <summary>Account details</summary>
             <dl className="details-grid">
               <div><dt>Account Type</dt><dd>{account.accountType}</dd></div>
               <div><dt>Account Number</dt><dd>{account.accountNumber}</dd></div>
               <div><dt>Routing Number</dt><dd>{account.routingNumber}</dd></div>
-              <div><dt>Primary Owner</dt><dd>{account.primaryOwner}</dd></div>
-              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwners.length ? account.jointOwners.join(', ') : 'None'}</dd></div>
+              <div><dt>Primary Owner</dt><dd>{account.primaryOwnerName}</dd></div>
+              <div><dt>Joint Owner(s)</dt><dd>{account.jointOwnerNames.length ? account.jointOwnerNames.join(', ') : 'None'}</dd></div>
               <div><dt>APY</dt><dd>{account.apy}%</dd></div>
               <div><dt>Direct Deposit</dt><dd>{account.directDeposit ? 'Yes' : 'No'}</dd></div>
               {account.accountType === 'Certificate' && (

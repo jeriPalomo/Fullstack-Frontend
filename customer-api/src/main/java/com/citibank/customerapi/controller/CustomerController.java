@@ -61,7 +61,7 @@ public class CustomerController {
     @GetMapping("/{customerId}/accounts")
     public List<AccountResponse> getCustomerAccounts(@PathVariable String customerId) {
         customerService.getCustomer(customerId);
-        return accountService.getAccountsForCustomer(customerId).stream().map(AccountResponse::new).toList();
+        return accountService.getAccountsForCustomer(customerId).stream().map(accountService::toResponse).toList();
     }
 
     // POST /api/customers -> creates a new customer, 409 if the id is already taken

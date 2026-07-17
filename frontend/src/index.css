@@ -625,6 +625,56 @@ th {
   font-size: 0.95rem;
 }
 
+/* Settings dropdown - gear button + menu, used anywhere a freeze/delete action
+   needs to be a deliberate two-step action rather than a bare always-visible button. */
+
+.settings-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-menu-trigger {
+  font-size: 0.9rem;
+}
+
+.settings-menu-list {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 20;
+  min-width: 190px;
+  background: var(--citi-white);
+  border: 1px solid var(--citi-gray-200);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.settings-menu-item {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.settings-menu-item:hover {
+  background: var(--citi-gray-100);
+}
+
+.settings-menu-item-danger {
+  color: var(--citi-red-dark);
+}
+
+.settings-menu-item-danger:hover {
+  background: var(--citi-red-50);
+}
+
 /* Modal */
 
 .modal-backdrop {
@@ -676,6 +726,11 @@ th {
 
 .modal-body .details-grid {
   padding: 0;
+}
+
+.confirm-danger-input {
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 .modal-actions {
