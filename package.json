@@ -9,7 +9,7 @@
     "stop": "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 27018,8080,5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }\""
   },
   "devDependencies": {
-    "concurrently": "^9.0.0",
-    "wait-on": "^8.0.0"
+    "concurrently": "^9.2.4",
+    "wait-on": "^8.0.5"
   }
 }
